@@ -247,6 +247,36 @@
             };
         }
 
+        function saveTasksToDB() {
+            const transaction = db.transaction(["tasks"], "readwrite");
+            const store = transaction.objectStore("tasks");
+            store.clear();
+            tasks.forEach(task => {
+                store.put({
+                    id: task.id,
+                    name: task.name,
+                    status: task.status,
+                    description: task.description,
+                    comments: task.comments,
+                    parentId: task.parentId,
+                    collapsed: task.collapsed
+                });
+            });
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById("task-list");
+            const statusFilter = document.getElementById("status-filter").value;
+            taskList.innerHTML = "";
+
+            const filteredTasks = tasks.filter(task => 
+                task.status === statusFilter || 
+                (task.parentId !== null && tasks.find(p => p.id === task.parentId).status === statusFilter)
+            );
+
+            filteredTasks.forEach(task => createTaskElement(task, 0));
+        }
+
         function createTaskElement(task, level) {
             const taskEl = document.createElement("div");
             taskEl.className = `task ${task.collapsed ? 'collapsed' : ''}`;
@@ -494,44 +524,6 @@ document.getElementById('task-form').addEventListener('submit', function(event) 
         alert('Le nom de la tâche est obligatoire.');
     }
 });
-
-function saveTasksToDB() {
-    const transaction = db.transaction(["tasks"], "readwrite");
-    const store = transaction.objectStore("tasks");
-    store.clear();
-    tasks.forEach(task => {
-        store.put({
-            id: task.id,
-            name: task.name,
-            status: task.status,
-            description: task.description,
-            comments: task.comments,
-            parentId: task.parentId,
-            collapsed: task.collapsed
-        });
-    });
-}
-
-function renderTasks() {
-    const taskList = document.getElementById("task-list");
-    taskList.innerHTML = "";
-
-    tasks.forEach(task => {
-        const taskEl = document.createElement("div");
-        taskEl.className = `task ${task.collapsed ? 'collapsed' : ''}`;
-        taskEl.innerHTML = `
-            <h3 onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'} ${task.name}</h3>
-            <p class="description">${task.description || "Ajouter une description"}</p>
-            <div class="buttons">
-                <button class="btn-done" onclick="updateTaskStatus(${task.id}, 'done')">Done</button>
-                <button class="btn-cancel" onclick="updateTaskStatus(${task.id}, 'cancel')">Cancel</button>
-                <button class="btn-delete" onclick="confirmDeleteTask(${task.id})">Supprimer</button>
-            </div>
-        `;
-        taskList.appendChild(taskEl);
-    });
-}
-
         
     </script>
 </body>
