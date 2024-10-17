@@ -178,8 +178,6 @@
                 this.comments = comments;
                 this.parentId = parentId;
                 this.subTasks = [];
-                this.startTime = null;
-                this.duration = 0;
             }
 
             addSubTask(subTask) {
@@ -202,16 +200,6 @@
 
             addComment(comment) {
                 this.comments.push(comment);
-            }
-
-            setDelay(duration) {
-                this.duration = duration;
-                this.startTime = new Date().toISOString();
-            }
-
-            setAwait(duration) {
-                this.duration = duration;
-                this.startTime = new Date().toISOString();
             }
         }
 
@@ -241,9 +229,6 @@
                 taskIdCounter = 0;
                 dbTasks.forEach(dbTask => {
                     const task = new Task(dbTask.id, dbTask.name, dbTask.status, dbTask.description, dbTask.comments, dbTask.parentId);
-                    task.isOpen = dbTask.isOpen || false;
-                    task.startTime = dbTask.startTime || null;
-                    task.duration = dbTask.duration || 0;
                     tasks.push(task);
                     if (dbTask.id >= taskIdCounter) {
                         taskIdCounter = dbTask.id + 1;
@@ -273,10 +258,7 @@
                     status: task.status,
                     description: task.description,
                     comments: task.comments,
-                    parentId: task.parentId,
-                    isOpen: task.isOpen,
-                    startTime: task.startTime,
-                    duration: task.duration
+                    parentId: task.parentId
                 });
             });
         }
@@ -286,14 +268,10 @@
             const statusFilter = document.getElementById("status-filter").value;
             taskList.innerHTML = "";
 
-            const filteredTasks = tasks.filter(task => {
-                if (task.status === statusFilter) return true;
-                if (task.parentId !== null) {
-                    const parent = tasks.find(t => t.id === task.parentId);
-                    return parent && parent.status === statusFilter;
-                }
-                return false;
-            });
+            const filteredTasks = tasks.filter(task => 
+                task.status === statusFilter || 
+                (task.parentId !== null && tasks.find(p => p.id === task.parentId).status === statusFilter)
+            );
 
             function createTaskElement(task, level) {
                 const taskEl = document.createElement("div");
@@ -303,16 +281,13 @@
                     <h3 contenteditable="true" onblur="editTaskName(${task.id}, this)">${task.name}</h3>
                     <p class="description" contenteditable="true" onblur="editTaskDescription(${task.id}, this)">${task.description || "Ajouter une description"}</p>
                     <p>Status: ${task.status}</p>
-                    ${task.status === 'delay' || task.status === 'await' ? `
-                        <p class="timer" id="timer-${task.id}">${formatTimeRemaining(task)}</p>
-                    ` : ''}
                     <div class="comments">
                         ${task.comments.map((comment, index) => `
                             <div class="comment">
                                 <span onclick="editComment(${task.id}, ${index})">${new Date(comment.date).toLocaleString()}: ${comment.text}</span>
                                 <input type="text" class="edit-comment" placeholder="Modifier le commentaire..." style="display:none" onkeypress="if(event.key==='Enter'){editComment(${task.id}, ${index}, this.value)}">
                                 <button onclick="editComment(${task.id}, ${index}, this.previousElementSibling.value)" style="display:none">OK</button>
-                                <button onclick="deleteComment(${task.id}, ${index})">Supprimer</button>
+                                <button onclick="confirmDeleteComment(${task.id}, ${index})">Supprimer</button>
                             </div>
                         `).join("")}
                         <input type="text" placeholder="Ajouter un commentaire..." onkeypress="if(event.key==='Enter'){addComment(event, ${task.id})}">
@@ -321,30 +296,53 @@
                     <div class="buttons">
                         <button class="btn-done" onclick="promptCommentAndAction(${task.id}, 'done')">Done</button>
                         <button class="btn-cancel" onclick="promptCommentAndAction(${task.id}, 'cancel')">Cancel</button>
-                        <button class="btn-delay" onclick="setDelay(${task.id})">Delay</button>
-                        <button class="btn-await" onclick="setAwait(${task.id})">Await</button>
+                        <button class="btn-delay" onclick="promptCommentAndAction(${task.id}, 'delay')">Delay</button>
+                        <button class="btn-await" onclick="promptCommentAndAction(${task.id}, 'await')">Await</button>
                         <button class="btn-doc" onclick="promptCommentAndAction(${task.id}, 'doc')">Doc</button>
                         <button class="btn-subtask" onclick="addSubTask(${task.id})">Ajouter sous-tâche</button>
-                        ${task.subTasks.length === 0 ? `<button class="btn-delete" onclick="deleteTask(${task.id})">Supprimer</button>` : ''}
+                        ${task.subTasks.length === 0 ? `<button class="btn-delete" onclick="confirmDeleteTask(${task.id})">Supprimer</button>` : ''}
                     </div>
                 `;
                 taskList.appendChild(taskEl);
                 task.subTasks.forEach(subTask => {
-                    createTaskElement(subTask, level + 1);
+                    if (subTask.status === task.status) {
+                        createTaskElement(subTask, level + 1);
+                    } else {
+                        taskList.appendChild(createTaskElement(subTask, 0)); // Display subTask alone if its status differs
+                    }
                 });
             }
 
             filteredTasks.forEach(task => {
-                if (task.parentId === null) {
-                    createTaskElement(task, 0);
-                }
+                createTaskElement(task, 0);
             });
         }
 
-        function editTaskName(taskId, element) {
+        function confirmDeleteTask(taskId) {
+            if (confirm("Êtes-vous sûr de vouloir supprimer cette tâche ?")) {
+                deleteTask(taskId);
+            }
+        }
+
+        function deleteTask(taskId) {
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1) {
+                tasks.splice(taskIndex, 1);
+                saveTasksToDB();
+                renderTasks();
+            }
+        }
+
+        function confirmDeleteComment(taskId, commentIndex) {
+            if (confirm("Êtes-vous sûr de vouloir supprimer ce commentaire ?")) {
+                deleteComment(taskId, commentIndex);
+            }
+        }
+
+        function deleteComment(taskId, commentIndex) {
             const task = tasks.find(t => t.id === taskId);
             if (task) {
-                task.name = element.textContent.trim();
+                task.comments.splice(commentIndex, 1);
                 saveTasksToDB();
                 renderTasks();
             }
@@ -372,53 +370,13 @@
                     task.addComment({ text: comment, date: new Date().toISOString() });
                     if (actionType === 'delay' || actionType === 'await') {
                         const durationInput = prompt("Indiquez un délai (par exemple, '2 heures', 'demain', 'lundi prochain'):");
-                        const duration = parseDuration(durationInput);
-                        if (duration) {
-                            if (actionType === 'delay') {
-                                task.setDelay(duration);
-                            } else {
-                                task.setAwait(duration);
-                            }
-                        } else {
-                            alert("Délai invalide");
-                            return;
+                        if (durationInput) {
+                            // Implement logic to set delay/await here if needed
                         }
                     }
                     updateTaskStatus(taskId, actionType);
                     saveTasksToDB();
                     renderTasks();
-                }
-            }
-        }
-
-        function setDelay(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task) {
-                const durationInput = prompt("Indiquez un délai (par exemple, '2 heures', 'demain', 'lundi prochain'):");
-                const duration = parseDuration(durationInput);
-                if (duration) {
-                    task.setDelay(duration);
-                    updateTaskStatus(taskId, 'delay');
-                    saveTasksToDB();
-                    renderTasks();
-                } else {
-                    alert("Délai invalide");
-                }
-            }
-        }
-
-        function setAwait(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task) {
-                const durationInput = prompt("Indiquez un temps d'attente (par exemple, '30 minutes'):");
-                const duration = parseDuration(durationInput);
-                if (duration) {
-                    task.setAwait(duration);
-                    updateTaskStatus(taskId, 'await');
-                    saveTasksToDB();
-                    renderTasks();
-                } else {
-                    alert("Temps d'attente invalide");
                 }
             }
         }
@@ -437,147 +395,6 @@
             if (task) {
                 task.description = element.textContent.trim();
                 saveTasksToDB();
-            }
-        }
-
-        function confirmDelete(taskId) {
-            if (confirm("Êtes-vous sûr de vouloir supprimer cette tâche ?")) {
-                deleteTask(taskId);
-            }
-        }
-
-        function deleteTask(taskId) {
-            const taskIndex = tasks.findIndex(t => t.id === taskId);
-            if (taskIndex !== -1) {
-                tasks.splice(taskIndex, 1);
-                saveTasksToDB();
-                renderTasks();
-            }
-        }
-
-        function addComment(event, taskId) {
-            const input = event.target.previousElementSibling;
-            const commentText = input.value.trim();
-            if (commentText) {
-                const task = tasks.find(t => t.id === taskId);
-                if (task) {
-                    task.addComment({ text: commentText, date: new Date().toISOString() });
-                    saveTasksToDB();
-                    renderTasks();
-                    input.value = "";
-                }
-            }
-        }
-
-        function editComment(taskId, commentIndex, newText) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task && task.comments[commentIndex]) {
-                task.comments[commentIndex].text = newText;
-                saveTasksToDB();
-                renderTasks();
-            }
-        }
-
-        function deleteComment(taskId, commentIndex) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task && task.comments[commentIndex]) {
-                if (confirm("Êtes-vous sûr de vouloir supprimer ce commentaire ?")) {
-                    task.comments.splice(commentIndex, 1);
-                    saveTasksToDB();
-                    renderTasks();
-                }
-            }
-        }
-
-        function parseDuration(input) {
-            let duration = 0;
-            const timeUnits = {
-                'secondes': 1000,
-                'second': 1000,
-                'minutes': 1000 * 60,
-                'minute': 1000 * 60,
-                'heures': 1000 * 60 * 60,
-                'heure': 1000 * 60 * 60,
-                'jours': 1000 * 60 * 60 * 24,
-                'jour': 1000 * 60 * 60 * 24
-            };
-            const regex = /(\d+)\s*(secondes|second|minutes|minute|heures|heure|jours|jour)/g;
-            let match;
-            while ((match = regex.exec(input)) !== null) {
-                const value = parseInt(match[1]);
-                const unit = timeUnits[match[2].toLowerCase()];
-                if (unit) {
-                    duration += value * unit;
-                }
-            }
-            return duration > 0 ? duration : null;
-        }
-
-        setInterval(() => {
-            const currentTime = new Date();
-            tasks.forEach(task => {
-                if ((task.status === 'delay' || task.status === 'await') && task.duration > 0 && task.startTime) {
-                    const elapsedTime = currentTime - new Date(task.startTime);
-                    if (elapsedTime >= task.duration) {
-                        task.updateStatus('inbox');
-                        task.startTime = null;
-                        task.duration = 0;
-                    }
-                }
-            });
-            saveTasksToDB();
-            renderTasks();
-        }, 1000);
-
-        function formatTimeRemaining(task) {
-            if (!task.startTime || task.duration <= 0) return "00:00:00";
-            const currentTime = new Date();
-            const elapsedTime = currentTime - new Date(task.startTime);
-            const remainingTime = task.duration - elapsedTime;
-            if (remainingTime <= 0) return "00:00:00";
-            const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        }
-
-        async function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const taskList = document.getElementById("task-list");
-            const tasksElements = taskList.querySelectorAll(".task");
-            let y = 10;
-            tasksElements.forEach(taskEl => {
-                const indent = parseInt(taskEl.style.marginLeft) / 20;
-                const title = taskEl.querySelector("h3").innerText;
-                const status = taskEl.querySelector("p").innerText;
-                doc.text(`${'  '.repeat(indent)}- ${title} (${status})`, 10, y);
-                y += 10;
-                const comments = taskEl.querySelectorAll(".comment span");
-                comments.forEach(comment => {
-                    doc.text(`${'  '.repeat(indent + 1)}• ${comment.innerText}`, 10, y);
-                    y += 10;
-                });
-                y += 5;
-                if (y > 280) {
-                    doc.addPage();
-                    y = 10;
-                }
-            });
-            doc.save("rapport_taches.pdf");
-        }
-
-        function addSubTask(parentId) {
-            const subTaskName = prompt("Nom de la sous-tâche :");
-            if (subTaskName) {
-                const parentTask = tasks.find(task => task.id === parentId);
-                if (parentTask) {
-                    const subTask = new Task(taskIdCounter++, subTaskName, "inbox", "", [], parentId);
-                    parentTask.addSubTask(subTask);
-                    tasks.push(subTask);
-                    saveTasksToDB();
-                    renderTasks();
-                }
             }
         }
 
@@ -600,6 +417,15 @@
             renderTasks();
         }
 
+        function editTaskName(taskId, element) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.name = element.textContent.trim();
+                saveTasksToDB();
+                renderTasks();
+            }
+        }
+
         function importData() {
             document.getElementById('import-file').click();
         }
@@ -611,12 +437,14 @@
                 reader.onload = function(e) {
                     try {
                         const data = JSON.parse(e.target.result);
-                        tasks = data.map(taskData => {
-                            const task = new Task(taskData.id, taskData.name, taskData.status, taskData.description, taskData.comments, taskData.parentId);
-                            task.startTime = taskData.startTime || null;
-                            task.duration = taskData.duration || 0;
-                            return task;
-                        });
+                        tasks = data.map(taskData => new Task(
+                            taskData.id,
+                            taskData.name,
+                            taskData.status,
+                            taskData.description,
+                            taskData.comments,
+                            taskData.parentId
+                        ));
                         saveTasksToDB();
                         renderTasks();
                     } catch (error) {
@@ -637,58 +465,95 @@
             a.click();
         }
 
-        function forkApplication() {
-            const doctype = "<!DOCTYPE html>";
-            const headContent = document.head.innerHTML.replace(/<script.*?<\/script>/g, '');
-            const bodyContent = document.body.innerHTML.replace(/<form.*?<\/form>/, '');
-            const tasksData = JSON.stringify(tasks, null, 2);
-            const fullContent = `
-                ${doctype}
-                <html lang="fr">
-                <head>${headContent}</head>
-                <body>${bodyContent}
-                    <script>
-                        const tasks = ${tasksData};
-                        (${saveTasksToDB.toString()})();
-                        (${renderTasks.toString()})();
-                        (${editTaskName.toString()})();
-                        (${editTaskDescription.toString()})();
-                        (${promptCommentAndAction.toString()})();
-                        (${generatePDF.toString()})();
-                        (${backupAndClearMemory.toString()})();
-                        (${importData.toString()})();
-                        (${handleFileImport.toString()})();
-                        (${forkApplication.toString()})();
-                        saveTasksToDB();
-                        renderTasks();
-                    <\/script>
-                </body>
-                </html>
-            `.trim();
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const taskList = document.getElementById("task-list");
+            const tasksElements = taskList.querySelectorAll(".task");
+            let y = 10;
 
-            const blob = new Blob([fullContent], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = "forked_app.html";
-            a.click();
+            tasksElements.forEach(taskEl => {
+                const indent = parseInt(taskEl.style.marginLeft) / 20;
+                const title = taskEl.querySelector("h3").innerText;
+                const status = taskEl.querySelector("p").innerText;
+                doc.text(`${'  '.repeat(indent)}- ${title} (${status})`, 10, y);
+                y += 10;
+                const comments = taskEl.querySelectorAll(".comment span");
+                comments.forEach(comment => {
+                    doc.text(`${'  '.repeat(indent + 1)}• ${comment.innerText}`, 10, y);
+                    y += 10;
+                });
+                y += 5;
+                if (y > 280) {
+                    doc.addPage();
+                    y = 10;
+                }
+            });
+
+            doc.save("rapport_taches.pdf");
         }
 
+        function addSubTask(parentId) {
+            const subTaskName = prompt("Nom de la sous-tâche :");
+            if (subTaskName) {
+                const parentTask = tasks.find(task => task.id === parentId);
+                if (parentTask) {
+                    const subTask = new Task(taskIdCounter++, subTaskName, "inbox", "", [], parentId);
+                    parentTask.addSubTask(subTask);
+                    tasks.push(subTask);
+                    saveTasksToDB();
+                    renderTasks();
+                }
+            }
+        }
+
+        // Start the interval to check for delayed/awaiting tasks
         setInterval(() => {
-            const currentTime = new Date();
             tasks.forEach(task => {
-                if ((task.status === 'delay' || task.status === 'await') && task.duration > 0 && task.startTime) {
-                    const elapsedTime = currentTime - new Date(task.startTime);
+                if ((task.status === 'delay' || task.status === 'await') && task.duration > 0) {
+                    const elapsedTime = new Date() - new Date(task.startTime);
                     if (elapsedTime >= task.duration) {
-                        task.updateStatus('inbox');
-                        task.startTime = null;
-                        task.duration = 0;
+                        // Move back to inbox if the time is up
+                        updateTaskStatus(task.id, 'inbox');
                     }
                 }
             });
+        }, 1000);
+
+
+
+
+///////////
+
+
+
+function addComment(event, taskId) {
+    const input = event.target.previousElementSibling;
+    const commentText = input.value.trim();
+    if (commentText) {
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+            task.addComment({ text: commentText, date: new Date().toISOString() });
             saveTasksToDB();
             renderTasks();
-        }, 1000);
+            input.value = "";
+        }
+    }
+}
+
+function deleteComment(taskId, commentIndex) {
+    const task = tasks.find(t => t.id === taskId);
+    if (task && task.comments[commentIndex]) {
+        if (confirm("Êtes-vous sûr de vouloir supprimer ce commentaire ?")) {
+            task.comments.splice(commentIndex, 1);
+            saveTasksToDB();
+            renderTasks();
+        }
+    }
+}
+
+
+
     </script>
 </body>
 </html>
