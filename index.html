@@ -247,36 +247,6 @@
             };
         }
 
-        function saveTasksToDB() {
-            const transaction = db.transaction(["tasks"], "readwrite");
-            const store = transaction.objectStore("tasks");
-            store.clear();
-            tasks.forEach(task => {
-                store.put({
-                    id: task.id,
-                    name: task.name,
-                    status: task.status,
-                    description: task.description,
-                    comments: task.comments,
-                    parentId: task.parentId,
-                    collapsed: task.collapsed
-                });
-            });
-        }
-
-        function renderTasks() {
-            const taskList = document.getElementById("task-list");
-            const statusFilter = document.getElementById("status-filter").value;
-            taskList.innerHTML = "";
-
-            const filteredTasks = tasks.filter(task => 
-                task.status === statusFilter || 
-                (task.parentId !== null && tasks.find(p => p.id === task.parentId).status === statusFilter)
-            );
-
-            filteredTasks.forEach(task => createTaskElement(task, 0));
-        }
-
         function createTaskElement(task, level) {
             const taskEl = document.createElement("div");
             taskEl.className = `task ${task.collapsed ? 'collapsed' : ''}`;
