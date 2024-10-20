@@ -289,7 +289,7 @@
         if (typeof Sugar === 'undefined') {
             console.error("Sugar.js n'est pas chargé correctement. Veuillez vérifier l'inclusion du script.");
         } else {
-            console.log("Sugar.js chargé avec succès :", Sugar);
+            //console.log("Sugar.js chargé avec succès :", Sugar);
         }
 
         let tasks = [];
@@ -1042,9 +1042,9 @@ function parseDateExpression(input, baseDate) {
     const parsedDate = Sugar.Date.create(input, { from: now });
     
     // Vérification étape par étape pour mieux comprendre ce qui échoue
-    console.log("Parsed Date:", parsedDate);
-    console.log("Is Valid:", Sugar.Date.isValid(parsedDate));
-    console.log("Is Future:", Sugar.Date.isFuture(parsedDate));
+    // console.log("Parsed Date:", parsedDate);
+    // console.log("Is Valid:", Sugar.Date.isValid(parsedDate));
+    // console.log("Is Future:", Sugar.Date.isFuture(parsedDate));
 
     if (Sugar.Date.isValid(parsedDate) && Sugar.Date.isFuture(parsedDate)) {
         return parsedDate;
@@ -1085,3 +1085,4 @@ function modifyDeadline(taskId) {
     </script>
 </body>
 </html>
+
