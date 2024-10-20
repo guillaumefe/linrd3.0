@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Linrd</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,56 +12,60 @@
             height: 100vh;
             margin: 0;
             background-color: #f4f4f9;
-            font-size: 40px;
         }
 
         #task-form {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            padding: 10px;
+            padding: 20px;
             background: #007bff;
             color: #fff;
             align-items: center;
+
+
         }
 
         #task-form input {
-            padding: 5px;
-            font-size: 14px;
+            padding: 10px;
+            font-size: 24px; /* Taille de la police augmentée */
             border-radius: 3px;
             border: 1px solid #ccc;
             flex: 1;
-            min-width: 150px;
+            min-width: 200px;
         }
 
         #task-form button {
-            padding: 5px 10px;
+            padding: 10px 20px;
             background: #28a745;
             color: white;
             border: none;
             cursor: pointer;
             border-radius: 3px;
+            font-size: 24px; /* Taille de la police augmentée */
         }
 
         #visualization {
             flex: 1;
-            padding: 20px;
+            padding: 30px;
             overflow-y: auto;
         }
 
         .task-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 20px;
+
         }
 
         .task {
             background: #ffffff;
-            padding: 10px;
+            padding: 20px;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
+
         }
 
         .task.collapsed .description,
@@ -71,97 +76,97 @@
 
         .task h3 {
             margin: 0;
-            font-size: 18px;
+            font-size: 28px; /* Taille de la police augmentée */
             color: #333;
             cursor: pointer;
         }
 
         .task .description {
-            font-size: 14px;
+            font-size: 20px; /* Taille de la police augmentée */
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         .task .buttons {
-            margin-top: 10px;
             display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-top: 20px;
         }
 
-        .task button {
-            color: white;
-            border: none;
-            padding: 5px 10px;
+        .task .buttons i {
             cursor: pointer;
-            border-radius: 3px;
-            font-size: 14px;
+            font-size: 30px; /* Taille de l'icône augmentée */
+            color: #555;
+            padding: 15px;
+            background: #f1f1f1;
+            border-radius: 5px;
         }
 
-        .btn-done { background: #28a745; }
-        .btn-cancel { background: #d9534f; }
-        .btn-delay { background: #ffc107; color: #000; }
-        .btn-await { background: #17a2b8; }
-        .btn-doc { background: #6f42c1; }
-        .btn-subtask { background: #007bff; }
-        .btn-delete { background: #dc3545; }
+        .btn-done i { color: #28a745; }
+        .btn-cancel i { color: #d9534f; }
+        .btn-delay i { color: #ffc107; }
+        .btn-await i { color: #17a2b8; }
+        .btn-doc i { color: #6f42c1; }
+        .btn-subtask i { color: #007bff; }
+        .btn-delete i { color: #dc3545; }
 
         .comments {
             background: #f1f1f1;
-            padding: 10px;
+            padding: 15px;
             border-radius: 5px;
             margin-top: 10px;
-            max-height: 150px;
+            max-height: 200px;
             overflow-y: auto;
         }
 
         .comment {
             display: flex;
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         .comment span {
             flex: 1;
             word-break: break-word;
             cursor: pointer;
+            font-size: 18px; /* Taille de la police augmentée */
         }
 
         .comment input {
             flex: 1;
-            margin-left: 5px;
-            padding: 3px;
+            margin-left: 10px;
+            padding: 10px;
+            font-size: 18px; /* Taille de la police augmentée */
         }
 
         #filters {
             display: flex;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
 
         #filters select {
-            padding: 5px;
-            font-size: 14px;
+            padding: 10px;
+            font-size: 24px; /* Taille de la police augmentée */
         }
 
         #reporting, #clear-memory, #import-data, #fork-app, #export-data {
-            margin: 10px 0;
+            margin: 20px 0;
         }
 
         #reporting button, #clear-memory button, #import-data button, #fork-app button, #export-data button {
             background: #28a745;
             color: white;
-            padding: 10px;
+            padding: 20px;
             border: none;
             cursor: pointer;
             border-radius: 5px;
-            font-size: 14px;
+            font-size: 24px; /* Taille de la police augmentée */
             width: 100%;
         }
 
         #clear-memory button { background: #ff4d4d; }
 
-        /* Responsive styles for smaller screens */
         @media (max-width: 768px) {
             #task-form {
                 flex-direction: column;
@@ -176,7 +181,7 @@
             }
 
             .task .buttons {
-                flex-direction: column;
+                flex-direction: row;
             }
         }
 
@@ -187,12 +192,29 @@
 
             #task-form input {
                 width: 100%;
-                margin-bottom: 10px;
-                width: 96%;
+                margin-bottom: 20px;
+width: 96%;
+ 
             }
 
             #task-form button {
                 width: 100%;
+            }
+
+            #task-form input, #task-form button {
+                font-size: 26px; /* Augmenter la taille de la police sur mobile */
+            }
+
+            .task h3 {
+                font-size: 32px; /* Augmenter la taille de la police sur mobile */
+            }
+
+            .task .description {
+                font-size: 24px; /* Augmenter la taille de la police sur mobile */
+            }
+
+            .task .buttons i {
+                font-size: 40px; /* Augmenter la taille des icônes sur mobile */
             }
         }
     </style>
@@ -234,350 +256,7 @@
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-class Task {
-    constructor(id, name, status = "inbox", description = "", comments = [], parentId = null, collapsed = true) {
-        this.id = id;
-        this.name = name;
-        this.status = status;
-        this.description = description;
-        this.comments = comments;
-        this.parentId = parentId;
-        this.collapsed = collapsed;
-        this.subTasks = [];
-    }
-
-    toggleCollapse() {
-        this.collapsed = !this.collapsed;
-    }
-
-    addSubTask(subTask) {
-        this.subTasks.push(subTask);
-    }
-
-    updateStatus(newStatus) {
-        this.status = newStatus;
-        this.updateSubTasksStatus(newStatus);
-    }
-
-    updateSubTasksStatus(newStatus) {
-        this.subTasks.forEach(subTask => {
-            if ((newStatus === 'done' && subTask.status !== 'cancel' && subTask.status !== 'doc') ||
-                (newStatus === 'cancel' && subTask.status !== 'done' && subTask.status !== 'doc')) {
-                subTask.updateStatus(newStatus);
-            }
-        });
-    }
-
-    addComment(comment) {
-        this.comments.push(comment);
-    }
-}
-
-let db;
-let tasks = [];
-let taskIdCounter = 0;
-const request = indexedDB.open("taskManager", 1);
-
-request.onupgradeneeded = function(event) {
-    db = event.target.result;
-    const store = db.createObjectStore("tasks", { keyPath: "id", autoIncrement: true });
-    store.createIndex("parentId", "parentId", { unique: false });
-};
-
-request.onsuccess = function(event) {
-    db = event.target.result;
-    loadTasksFromDB();
-};
-
-function loadTasksFromDB() {
-    const transaction = db.transaction(["tasks"], "readonly");
-    const store = transaction.objectStore("tasks");
-    const request = store.getAll();
-    request.onsuccess = function(event) {
-        const dbTasks = event.target.result;
-        tasks = [];
-        taskIdCounter = 0;
-        dbTasks.forEach(dbTask => {
-            const task = new Task(dbTask.id, dbTask.name, dbTask.status, dbTask.description, dbTask.comments, dbTask.parentId, dbTask.collapsed);
-            tasks.push(task);
-            if (dbTask.id >= taskIdCounter) {
-                taskIdCounter = dbTask.id + 1;
-            }
-        });
-        renderTasks();
-    };
-}
-
-function saveTasksToDB() {
-    const transaction = db.transaction(["tasks"], "readwrite");
-    const store = transaction.objectStore("tasks");
-    store.clear();
-    tasks.forEach(task => {
-        store.put({
-            id: task.id,
-            name: task.name,
-            status: task.status,
-            description: task.description,
-            comments: task.comments,
-            parentId: task.parentId,
-            collapsed: task.collapsed
-        });
-    });
-}
-
-function renderTasks() {
-    const taskList = document.getElementById("task-list");
-    const statusFilter = document.getElementById("status-filter").value;
-    taskList.innerHTML = "";
-
-    const filteredTasks = tasks.filter(task => 
-        task.status === statusFilter || 
-        (task.parentId !== null && tasks.find(p => p.id === task.parentId).status === statusFilter)
-    );
-
-    filteredTasks.forEach(task => createTaskElement(task, 0));
-}
-
-function createTaskElement(task, level) {
-    const taskEl = document.createElement("div");
-    taskEl.className = `task ${task.collapsed ? 'collapsed' : ''}`;
-    taskEl.style.marginLeft = (level * 20) + "px";
-    taskEl.innerHTML = `
-        <h3 onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'} ${task.name}</h3>
-        <p class="description">${task.description || "Ajouter une description"}</p>
-        <div class="comments">
-            ${task.comments.map((comment, index) => `
-                <div class="comment">
-                    <span onclick="editComment(${task.id}, ${index})">${new Date(comment.date).toLocaleString()}: ${comment.text}</span>
-                    <input type="text" class="edit-comment" placeholder="Modifier le commentaire..." style="display:none" onkeypress="if(event.key==='Enter'){editComment(${task.id}, ${index}, this.value)}">
-                    <button onclick="editComment(${task.id}, ${index}, this.previousElementSibling.value)" style="display:none">OK</button>
-                    <button onclick="confirmDeleteComment(${task.id}, ${index})">Supprimer</button>
-                </div>
-            `).join("")}
-            <input type="text" placeholder="Ajouter un commentaire..." onkeypress="if(event.key==='Enter'){addComment(event, ${task.id})}">
-            <button onclick="addComment(event, ${task.id})">OK</button>
-        </div>
-        <div class="buttons">
-            <button class="btn-done" onclick="promptCommentAndAction(${task.id}, 'done')">Done</button>
-            <button class="btn-cancel" onclick="promptCommentAndAction(${task.id}, 'cancel')">Cancel</button>
-            <button class="btn-delay" onclick="promptCommentAndAction(${task.id}, 'delay')">Delay</button>
-            <button class="btn-await" onclick="promptCommentAndAction(${task.id}, 'await')">Await</button>
-            <button class="btn-doc" onclick="promptCommentAndAction(${task.id}, 'doc')">Doc</button>
-            <button class="btn-subtask" onclick="addSubTask(${task.id})">Ajouter sous-tâche</button>
-            ${task.subTasks.length === 0 ? `<button class="btn-delete" onclick="confirmDeleteTask(${task.id})">Supprimer</button>` : ''}
-        </div>
-    `;
-    document.getElementById("task-list").appendChild(taskEl);
-    task.subTasks.forEach(subTask => createTaskElement(subTask, level + 1));
-}
-
-function toggleTask(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-        task.toggleCollapse();
-        saveTasksToDB();
-        renderTasks();
-    }
-}
-
-function promptCommentAndAction(taskId, actionType) {
-    const comment = prompt("Ajoutez un commentaire pour cette action :");
-    if (comment) {
-        const task = tasks.find(t => t.id === taskId);
-        if (task) {
-            task.addComment({ text: comment, date: new Date().toISOString() });
-            if (actionType === 'delay' || actionType === 'await') {
-                const durationInput = prompt("Indiquez un délai (par exemple, '2 heures', 'demain', 'lundi prochain'):");
-            }
-            updateTaskStatus(taskId, actionType);
-            saveTasksToDB();
-            renderTasks();
-        }
-    }
-}
-
-function updateTaskStatus(taskId, newStatus) {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-        task.updateStatus(newStatus);
-        saveTasksToDB();
-        renderTasks();
-    }
-}
-
-function addComment(event, taskId) {
-    const input = event.target.previousElementSibling;
-    const commentText = input.value.trim();
-    if (commentText) {
-        const task = tasks.find(t => t.id === taskId);
-        if (task) {
-            task.addComment({ text: commentText, date: new Date().toISOString() });
-            saveTasksToDB();
-            renderTasks();
-            input.value = "";
-        }
-    }
-}
-
-function confirmDeleteTask(taskId) {
-    if (confirm("Êtes-vous sûr de vouloir supprimer cette tâche ?")) {
-        deleteTask(taskId);
-    }
-}
-
-function deleteTask(taskId) {
-    const taskIndex = tasks.findIndex(t => t.id === taskId);
-    if (taskIndex !== -1) {
-        tasks.splice(taskIndex, 1);
-        saveTasksToDB();
-        renderTasks();
-    }
-}
-
-function confirmDeleteComment(taskId, commentIndex) {
-    if (confirm("Êtes-vous sûr de vouloir supprimer ce commentaire ?")) {
-        deleteComment(taskId, commentIndex);
-    }
-}
-
-function deleteComment(taskId, commentIndex) {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-        task.comments.splice(commentIndex, 1);
-        saveTasksToDB();
-        renderTasks();
-    }
-}
-
-function importData() {
-    document.getElementById('import-file').click();
-}
-
-function handleFileImport(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                tasks = data.map(taskData => new Task(
-                    taskData.id,
-                    taskData.name,
-                    taskData.status,
-                    taskData.description,
-                    taskData.comments,
-                    taskData.parentId,
-                    taskData.collapsed
-                ));
-                saveTasksToDB();
-                renderTasks();
-            } catch (error) {
-                alert("Erreur lors de l'importation des données : " + error.message);
-            }
-        };
-        reader.readAsText(file);
-    }
-}
-
-function exportData() {
-    const data = JSON.stringify(tasks);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "tasks_export.json";
-    a.click();
-}
-
-function backupAndClearMemory() {
-    if (confirm("Voulez-vous sauvegarder avant de supprimer toutes les tâches ?")) {
-        const data = JSON.stringify(tasks);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "tasks_backup.json";
-        a.click();
-        clearMemory();
-    }
-}
-
-function clearMemory() {
-    tasks = [];
-    saveTasksToDB();
-    renderTasks();
-}
-
-async function generatePDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const taskList = document.getElementById("task-list");
-    const tasksElements = taskList.querySelectorAll(".task");
-    let y = 10;
-
-    tasksElements.forEach(taskEl => {
-        const indent = parseInt(taskEl.style.marginLeft) / 20;
-        const title = taskEl.querySelector("h3").innerText;
-        const status = taskEl.querySelector("p").innerText;
-        doc.text(`${'  '.repeat(indent)}- ${title} (${status})`, 10, y);
-        y += 10;
-        const comments = taskEl.querySelectorAll(".comment span");
-        comments.forEach(comment => {
-            doc.text(`${'  '.repeat(indent + 1)}• ${comment.innerText}`, 10, y);
-            y += 10;
-        });
-        y += 5;
-        if (y > 280) {
-            doc.addPage();
-            y = 10;
-        }
-    });
-
-    doc.save("rapport_taches.pdf");
-}
-
-function addSubTask(parentId) {
-    const subTaskName = prompt("Nom de la sous-tâche :");
-    if (subTaskName) {
-        const parentTask = tasks.find(task => task.id === parentId);
-        if (parentTask) {
-            const subTask = new Task(taskIdCounter++, subTaskName, "inbox", "", [], parentId);
-            parentTask.addSubTask(subTask);
-            tasks.push(subTask);
-            saveTasksToDB();
-            renderTasks();
-        }
-    }
-}
-
-setInterval(() => {
-    tasks.forEach(task => {
-        if ((task.status === 'delay' || task.status === 'await') && task.duration > 0) {
-            const elapsedTime = new Date() - new Date(task.startTime);
-            if (elapsedTime >= task.duration) {
-                updateTaskStatus(task.id, 'inbox');
-            }
-        }
-    });
-}, 1000);
-
-document.getElementById('task-form').addEventListener('submit', function(event) {
-    event.preventDefault();
-    const name = document.getElementById('new-task-name').value.trim();
-    const description = document.getElementById('new-task-description').value.trim();
-
-    if (name) {
-        const newTask = new Task(taskIdCounter++, name, "inbox", description);
-        tasks.push(newTask);
-        saveTasksToDB();
-        renderTasks();
-        document.getElementById('new-task-name').value = '';
-        document.getElementById('new-task-description').value = '';
-    } else {
-        alert('Le nom de la tâche est obligatoire.');
-    }
-});
-
+        // Your existing JavaScript code here
     </script>
 </body>
 </html>
