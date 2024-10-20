@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Linrd</title>
-    <!-- Inclusion de Font Awesome pour les icônes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Inclusion de SortableJS pour le glisser-déposer -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <!-- Inclusion de Sugar.js via jsDelivr -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/sugar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/locales/fr.js"></script>
+
     <style>
-        /* Styles existants inchangés */
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -288,7 +286,6 @@
     </div>
 
     <script>
-        // Vérification de la disponibilité de Sugar.js
         if (typeof Sugar === 'undefined') {
             console.error("Sugar.js n'est pas chargé correctement. Veuillez vérifier l'inclusion du script.");
         } else {
@@ -306,7 +303,9 @@
             if (savedTasks) {
                 try {
                     tasks = JSON.parse(savedTasks);
-                    const maxId = tasks.reduce((max, task) => (task.id > max ? task.id : max), 0);
+                    const maxId = tasks.reduce(function(max, task) {
+                        return task.id > max ? task.id : max;
+                    }, 0);
                     taskIdCounter = maxId + 1;
                     renderTasks();
                 } catch (error) {
@@ -370,16 +369,20 @@
         });
 
         function getMaxOrder(status) {
-            const filtered = tasks.filter(task => task.status === status);
+            const filtered = tasks.filter(function(task) {
+                return task.status === status;
+            });
             if (filtered.length === 0) return 0;
-            return Math.max(...filtered.map(task => task.order || 0));
+            return Math.max.apply(null, filtered.map(function(task) {
+                return task.order || 0;
+            }));
         }
 
         function saveAndRenderTasks() {
             localStorage.setItem('tasks', JSON.stringify(tasks));
             renderTasks();
             if (worker) {
-                worker.postMessage({ action: 'updateTasks', tasks });
+                worker.postMessage({ action: 'updateTasks', tasks: tasks });
             }
         }
 
@@ -387,54 +390,59 @@
             const taskList = document.getElementById('task-list');
             taskList.innerHTML = '';
 
-            let filteredTasks = tasks.filter(task => task.status === currentTab);
+            let filteredTasks = tasks.filter(function(task) {
+                return task.status === currentTab;
+            });
             if (currentTab === 'inbox') {
-                filteredTasks.sort((a, b) => (a.order || 0) - (b.order || 0));
+                filteredTasks.sort(function(a, b) {
+                    return (a.order || 0) - (b.order || 0);
+                });
             } else {
-                filteredTasks.sort((a, b) => new Date(b.modifiedDate) - new Date(a.modifiedDate));
+                filteredTasks.sort(function(a, b) {
+                    return new Date(b.modifiedDate) - new Date(a.modifiedDate);
+                });
             }
 
-            filteredTasks.forEach(task => {
+            filteredTasks.forEach(function(task) {
                 const taskEl = document.createElement('div');
-                taskEl.className = `task ${task.collapsed ? 'collapsed' : ''}`;
+                taskEl.className = 'task ' + (task.collapsed ? 'collapsed' : '');
                 taskEl.setAttribute('data-task-id', task.id);
 
                 const parentChain = getParentChain(task);
-                const fullTitle = parentChain.length > 0 ? `${parentChain.join(' > ')} > ${task.name}` : task.name;
-                const parentString = parentChain.length > 0 ? `Parents: ${parentChain.join(' > ')}` : '';
+                const fullTitle = parentChain.length > 0 ? parentChain.join(' > ') + ' > ' + task.name : task.name;
+                const parentString = parentChain.length > 0 ? 'Parents: ' + parentChain.join(' > ') : '';
 
                 let timerHtml = '';
                 if (task.status === 'delay' || task.status === 'await') {
                     const remaining = getRemainingTime(task.targetDate);
                     if (remaining > 0) {
-                        timerHtml = `<div class="timer" onclick="modifyDeadline(${task.id})"><i class="fas fa-clock"></i> ${formatTime(remaining)}</div>`;
+                        timerHtml = '<div class="timer" onclick="modifyDeadline(' + task.id + ')"><i class="fas fa-clock"></i> ' + formatTime(remaining) + '</div>';
                     } else {
-                        timerHtml = `<div class="timer" onclick="modifyDeadline(${task.id})"><i class="fas fa-clock"></i> 00:00:00</div>`;
+                        timerHtml = '<div class="timer" onclick="modifyDeadline(' + task.id + ')"><i class="fas fa-clock"></i> 00:00:00</div>';
                     }
                 }
 
-                taskEl.innerHTML = `
-                    <div style="display: flex; align-items: center;">
-                        <i class="fas fa-bars drag-handle"></i>
-                        <h3 style="flex: 1;" onclick="editTaskName(${task.id})">${escapeHTML(fullTitle)}</h3>
-                        <span class="toggle-icon" onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'}</span>
-                    </div>
-                    <p style="font-size: 0.9em; color: #555;">${escapeHTML(parentString)}</p>
-                    ${timerHtml}
-                    <pre class="description" onclick="editTaskDescription(${task.id})">${escapeHTML(task.description || 'Aucune description')}</pre>
-                    <div class="buttons">
-                        ${renderActionButton(task, 'done')}
-                        ${renderActionButton(task, 'cancel')}
-                        ${renderActionButton(task, 'delay')}
-                        ${renderActionButton(task, 'await')}
-                        ${renderActionButton(task, 'doc')}
-                        <button class="btn-delete" onclick="confirmDelete(${task.id})"><i class="fas fa-trash"></i> Delete</button>
-                    </div>
-                    <div class="comments" id="comments-${task.id}">
-                        <input type="text" placeholder="Ajouter un commentaire" oninput="saveCommentInput(${task.id}, this.value)" value="${escapeHTML(getSavedCommentInput(task.id))}" onkeypress="addComment(event, ${task.id})">
-                        ${renderComments(task.comments, task.id)}
-                    </div>
-                `;
+                taskEl.innerHTML = 
+                    '<div style="display: flex; align-items: center;">' +
+                        '<i class="fas fa-bars drag-handle"></i>' +
+                        '<h3 style="flex: 1;" onclick="editTaskName(' + task.id + ')">' + escapeHTML(fullTitle) + '</h3>' +
+                        '<span class="toggle-icon" onclick="toggleTask(' + task.id + ')">' + (task.collapsed ? '▶️' : '▼') + '</span>' +
+                    '</div>' +
+                    '<p style="font-size: 0.9em; color: #555;">' + escapeHTML(parentString) + '</p>' +
+                    timerHtml +
+                    '<pre class="description" onclick="editTaskDescription(' + task.id + ')">' + escapeHTML(task.description || 'Aucune description') + '</pre>' +
+                    '<div class="buttons">' +
+                        renderActionButton(task, 'done') +
+                        renderActionButton(task, 'cancel') +
+                        renderActionButton(task, 'delay') +
+                        renderActionButton(task, 'await') +
+                        renderActionButton(task, 'doc') +
+                        '<button class="btn-delete" onclick="confirmDelete(' + task.id + ')"><i class="fas fa-trash"></i> Delete</button>' +
+                    '</div>' +
+                    '<div class="comments" id="comments-' + task.id + '">' +
+                        '<input type="text" placeholder="Ajouter un commentaire" oninput="saveCommentInput(' + task.id + ', this.value)" value="' + escapeHTML(getSavedCommentInput(task.id)) + '" onkeypress="addComment(event, ' + task.id + ')">' +
+                        renderComments(task.comments, task.id) +
+                    '</div>';
                 taskList.appendChild(taskEl);
             });
 
@@ -462,7 +470,7 @@
             if (action === 'inbox') {
                 return '';
             }
-            return `<button class="btn-${action}" onclick="handleAction(${task.id}, '${action}')"><i class="fas fa-${getIcon(action)}"></i> ${capitalize(action)}</button>`;
+            return '<button class="btn-' + action + '" onclick="handleAction(' + task.id + ', \'' + action + '\')"><i class="fas fa-' + getIcon(action) + '"></i> ' + capitalize(action) + '</button>';
         }
 
         function getIcon(action) {
@@ -484,19 +492,23 @@
             if (!comments || comments.length === 0) {
                 return '<p>Aucun commentaire.</p>';
             }
-            const sortedComments = comments.slice().sort((a, b) => b.id - a.id);
-            return sortedComments.map(comment => `
-                <div class="comment-item">
-                    <p onclick="editComment(${taskId}, ${comment.id})">${escapeHTML(comment.text)}</p>
-                    <span>${comment.date}</span>
-                    <button class="convert-button" onclick="convertCommentToTask(${taskId}, ${comment.id})">Convertir en tâche</button>
-                    <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Supprimer</button>
-                </div>
-            `).join('');
+            const sortedComments = comments.slice().sort(function(a, b) {
+                return b.id - a.id;
+            });
+            return sortedComments.map(function(comment) {
+                return '<div class="comment-item">' +
+                           '<p onclick="editComment(' + taskId + ', ' + comment.id + ')">' + escapeHTML(comment.text) + '</p>' +
+                           '<span>' + comment.date + '</span>' +
+                           '<button class="convert-button" onclick="convertCommentToTask(' + taskId + ', ' + comment.id + ')">Convertir en tâche</button>' +
+                           '<button class="delete-button" onclick="deleteComment(' + taskId + ', ' + comment.id + ')">Supprimer</button>' +
+                       '</div>';
+            }).join('');
         }
 
         function toggleTask(taskId) {
-            const task = tasks.find(t => t.id === taskId);
+            const task = tasks.find(function(t) {
+                return t.id === taskId;
+            });
             if (task) {
                 task.collapsed = !task.collapsed;
                 saveAndRenderTasks();
@@ -505,89 +517,59 @@
 
         function changeTab(tab) {
             currentTab = tab;
-            document.querySelectorAll("#tabs button").forEach(button => button.classList.remove("active"));
-            const activeButton = document.querySelector(`#tabs button[onclick="changeTab('${tab}')"]`);
+            document.querySelectorAll("#tabs button").forEach(function(button) {
+                button.classList.remove("active");
+            });
+            const activeButton = document.querySelector('#tabs button[onclick="changeTab(\'' + tab + '\')"]');
             if (activeButton) {
                 activeButton.classList.add("active");
             }
             renderTasks();
         }
 
-        function handleAction(taskId, actionType) {
-            const task = tasks.find(t => t.id === taskId);
-            if (!task) {
-                console.error(`Tâche avec ID ${taskId} non trouvée.`);
-                return;
-            }
-            let targetDate = null;
+function handleAction(taskId, actionType) {
+    const task = tasks.find(function(t) {
+        return t.id === taskId;
+    });
+    if (!task) {
+        console.error("Tâche avec ID " + taskId + " non trouvée.");
+        return;
+    }
 
-            if (actionType === 'delay' || actionType === 'await') {
-                const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
-                let parsedDate = null;
+    // Pour 'delay' et 'await', utiliser modifyDeadline pour gérer la date
+    if (actionType === 'delay' || actionType === 'await') {
+        modifyDeadline(taskId);  // Appel de la fonction existante pour la gestion de la deadline
 
-                while (true) {
-                    const dateInput = prompt(`Veuillez fournir une date pour "${actionType}" (ex : demain, lundi prochain, le 25 décembre 2024) :`);
-                    if (dateInput === null) return;
-                    parsedDate = Sugar.Date.create(dateInput, { from: baseDate });
-                    if (parsedDate && parsedDate > baseDate) {
-                        targetDate = parsedDate;
-                        task.targetDate = targetDate;
-                        task.modifiedDate = new Date();
-                        break;
-                    }
-                    // Si Sugar ne peut pas parser directement la date, essayer de parser une période
-                    const period = parsePeriod(dateInput, baseDate);
-                    if (period) {
-                        targetDate = getRandomWorkingDay(period.start, period.end);
-                        if (targetDate) {
-                            task.targetDate = targetDate;
-                            task.modifiedDate = new Date();
-                            break;
-                        }
-                    }
-                    alert("Veuillez fournir une date valide et future.");
-                }
-
-                while (true) {
-                    const comment = prompt(`Veuillez ajouter un commentaire pour "${actionType}" :`);
-                    if (comment === null) return;
-                    if (comment.trim() !== "") {
-                        addCommentToTask(taskId, comment.trim());
-                        break;
-                    }
-                    alert("Le commentaire est obligatoire.");
-                }
-                task.status = actionType;
-                task.order = undefined;
-            } else if (actionType === 'done') {
-                while (true) {
-                    const comment = prompt(`Veuillez ajouter un commentaire pour "${actionType}" :`);
-                    if (comment === null) return;
-                    if (comment.trim() !== "") {
-                        addCommentToTask(taskId, comment.trim());
-                        break;
-                    }
-                    alert("Le commentaire est obligatoire pour 'Done'.");
-                }
-                task.status = actionType;
-                task.order = undefined;
-                task.modifiedDate = new Date();
-            } else if (actionType === 'cancel' || actionType === 'doc') {
-                const comment = prompt(`Voulez-vous ajouter un commentaire pour "${actionType}" ? (laisser vide pour ignorer)`);
-                if (comment && comment.trim() !== "") {
-                    addCommentToTask(taskId, comment.trim());
-                }
-                task.status = actionType;
-                task.order = undefined;
-                task.modifiedDate = new Date();
-            }
-
-            saveAndRenderTasks();
+        // Ajout du commentaire après modification de la deadline
+        const comment = prompt("Veuillez ajouter un commentaire pour \"" + actionType + "\" :");
+        if (comment && comment.trim() !== "") {
+            addCommentToTask(taskId, comment.trim());
+        } else {
+            alert("Le commentaire est obligatoire.");
+            return;  // Sortir si aucun commentaire n'est fourni
         }
 
+        task.status = actionType;
+        task.order = undefined;  // Réinitialiser l'ordre si la tâche change de statut
+    } 
+
+    // Pour les autres actions (done, cancel, doc)
+    else if (actionType === 'done' || actionType === 'cancel' || actionType === 'doc') {
+        const comment = prompt("Veuillez ajouter un commentaire pour \"" + actionType + "\" (laisser vide pour ignorer) :");
+        if (comment && comment.trim() !== "") {
+            addCommentToTask(taskId, comment.trim());
+        }
+
+        task.status = actionType;
+        task.order = undefined;
+        task.modifiedDate = new Date();  // Mettre à jour la date de modification
+    }
+
+    saveAndRenderTasks();  // Sauvegarder et rendre la tâche
+}
+
+
         function parsePeriod(input, baseDate) {
-            // Exemple de parsing de période : "dans les deux prochaines semaines"
-            // Cette implémentation est basique et peut être améliorée selon les besoins
             const regex = /dans\s+les\s+(\d+)\s+prochain(?:es|e)?\s+(semaines|jours|mois)/i;
             const match = input.match(regex);
             if (!match) return null;
@@ -618,7 +600,7 @@
             let current = new Date(start);
             while (Sugar.Date.compare(current, end) <= 0) {
                 const day = Sugar.Date.getDay(current);
-                if (day !== 0 && day !== 6) { // Exclure les dimanches (0) et samedis (6)
+                if (day !== 0 && day !== 6) {
                     workingDays.push(new Date(current));
                 }
                 current = Sugar.Date.add(current, { days: 1 });
@@ -641,7 +623,9 @@
         }
 
         function addCommentToTask(taskId, commentText) {
-            const task = tasks.find(t => t.id === taskId);
+            const task = tasks.find(function(t) {
+                return t.id === taskId;
+            });
             if (task) {
                 task.comments.push({
                     id: Date.now(),
@@ -653,7 +637,9 @@
         }
 
         function editTaskName(taskId) {
-            const task = tasks.find(t => t.id === taskId);
+            const task = tasks.find(function(t) {
+                return t.id === taskId;
+            });
             if (task) {
                 const newName = prompt("Éditer le nom de la tâche :", task.name);
                 if (newName !== null && newName.trim() !== "") {
@@ -665,7 +651,9 @@
         }
 
         function editTaskDescription(taskId) {
-            const task = tasks.find(t => t.id === taskId);
+            const task = tasks.find(function(t) {
+                return t.id === taskId;
+            });
             if (task) {
                 const newDescription = prompt("Éditer la description de la tâche :", task.description);
                 if (newDescription !== null) {
@@ -677,9 +665,13 @@
         }
 
         function editComment(taskId, commentId) {
-            const task = tasks.find(t => t.id === taskId);
+            const task = tasks.find(function(t) {
+                return t.id === taskId;
+            });
             if (task) {
-                const comment = task.comments.find(c => c.id === commentId);
+                const comment = task.comments.find(function(c) {
+                    return c.id === commentId;
+                });
                 if (comment) {
                     const newText = prompt("Éditer le commentaire :", comment.text);
                     if (newText !== null && newText.trim() !== "") {
@@ -699,19 +691,29 @@
         }
 
         function deleteTask(taskId) {
-            const deleteRecursively = (id) => {
-                const subTasks = tasks.filter(t => t.parentId === id);
-                subTasks.forEach(subTask => deleteRecursively(subTask.id));
-                tasks = tasks.filter(t => t.id !== id);
+            const deleteRecursively = function(id) {
+                const subTasks = tasks.filter(function(t) {
+                    return t.parentId === id;
+                });
+                subTasks.forEach(function(subTask) {
+                    deleteRecursively(subTask.id);
+                });
+                tasks = tasks.filter(function(t) {
+                    return t.id !== id;
+                });
             };
             deleteRecursively(taskId);
             saveAndRenderTasks();
         }
 
         function convertCommentToTask(taskId, commentId) {
-            const parentTask = tasks.find(t => t.id === taskId);
+            const parentTask = tasks.find(function(t) {
+                return t.id === taskId;
+            });
             if (!parentTask) return;
-            const comment = parentTask.comments.find(c => c.id === commentId);
+            const comment = parentTask.comments.find(function(c) {
+                return c.id === commentId;
+            });
             if (!comment) return;
             const parentChain = getParentChain(parentTask);
             const newTask = {
@@ -728,7 +730,9 @@
                 order: getMaxOrder('inbox') + 1
             };
             tasks.push(newTask);
-            parentTask.comments = parentTask.comments.filter(c => c.id !== commentId);
+            parentTask.comments = parentTask.comments.filter(function(c) {
+                return c.id !== commentId;
+            });
             parentTask.modifiedDate = new Date();
             saveAndRenderTasks();
         }
@@ -737,7 +741,9 @@
             let chain = [];
             let currentTask = task;
             while (currentTask.parentId !== null) {
-                const parentTask = tasks.find(t => t.id === currentTask.parentId);
+                const parentTask = tasks.find(function(t) {
+                    return t.id === currentTask.parentId;
+                });
                 if (parentTask) {
                     chain.unshift(parentTask.name);
                     currentTask = parentTask;
@@ -749,9 +755,13 @@
         }
 
         function deleteComment(taskId, commentId) {
-            const task = tasks.find(t => t.id === taskId);
+            const task = tasks.find(function(t) {
+                return t.id === taskId;
+            });
             if (task) {
-                task.comments = task.comments.filter(c => c.id !== commentId);
+                task.comments = task.comments.filter(function(c) {
+                    return c.id !== commentId;
+                });
                 task.modifiedDate = new Date();
                 saveAndRenderTasks();
             }
@@ -775,7 +785,7 @@
                 taskIdCounter = 0;
                 localStorage.removeItem('tasks');
                 localStorage.removeItem('taskForm');
-                Object.keys(localStorage).forEach(key => {
+                Object.keys(localStorage).forEach(function(key) {
                     if (key.startsWith('commentInput-')) {
                         localStorage.removeItem(key);
                     }
@@ -802,11 +812,14 @@
                 try {
                     const importedTasks = JSON.parse(e.target.result);
                     if (Array.isArray(importedTasks)) {
-                        tasks = importedTasks.map(task => ({
-                            ...task,
-                            order: task.status === 'inbox' ? (task.order || getMaxOrder('inbox') + 1) : undefined
-                        }));
-                        const maxId = tasks.reduce((max, task) => (task.id > max ? task.id : max), 0);
+                        tasks = importedTasks.map(function(task) {
+                            return Object.assign({}, task, {
+                                order: task.status === 'inbox' ? (task.order || getMaxOrder('inbox') + 1) : undefined
+                            });
+                        });
+                        const maxId = tasks.reduce(function(max, task) {
+                            return task.id > max ? task.id : max;
+                        }, 0);
                         taskIdCounter = maxId + 1;
                         saveAndRenderTasks();
                         alert("Importation réussie !");
@@ -820,76 +833,73 @@
             reader.readAsText(file);
         }
 
-        function forkApplication() {
-            const tasksData = JSON.stringify(tasks)
-                .replace(/\\/g, '\\\\')
-                .replace(/"/g, '\\"')
-                .replace(/'/g, "\\'")
-                .replace(/<\/script>/g, '<\\/script>');
-            const pageContent = document.documentElement.outerHTML.replace('</body>', `(function() {
-                const tasks = ${tasksData};
-                localStorage.setItem('tasks', JSON.stringify(tasks));
-                window.location.reload();
-            })();</body>`);
-            const blob = new Blob([pageContent], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'index.html';
-            a.click();
-            URL.revokeObjectURL(url);
+function initializeWorker() {
+    const workerCode = `
+        // Inlined Sugar.js functionality for date handling
+        function createDate(input) {
+            return new Date(input);
         }
 
-        function initializeWorker() {
-            const workerCode = `
-            importScripts('https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/sugar.min.js');
+        function isBeforeOrSame(date1, date2) {
+            return date1.getTime() <= date2.getTime();
+        }
 
-            self.onmessage = function(event) {
-                if (event.data.action === 'updateTasks') {
-                    const tasks = event.data.tasks;
-                    monitorTasks(tasks);
-                }
-            };
+        // Worker logic starts here
+        self.onmessage = function(event) {
+            if (event.data.action === 'updateTasks') {
+                const tasks = event.data.tasks;
+                monitorTasks(tasks);
+            }
+        };
 
-            function monitorTasks(tasks) {
-                setInterval(() => {
-                    const now = new Date();
-                    let updated = false;
-                    tasks.forEach(task => {
-                        if ((task.status === 'delay' || task.status === 'await') && task.targetDate) {
-                            const targetDate = Sugar.Date.create(task.targetDate);
-                            if (Sugar.Date.isBeforeOrSame(targetDate, now)) {
-                                task.status = 'inbox';
-                                task.modifiedDate = new Date();
-                                task.order = getMaxOrder(tasks, 'inbox') + 1;
-                                task.targetDate = null;
-                                updated = true;
-                            }
+        function monitorTasks(tasks) {
+            setInterval(function() {
+                const now = new Date();
+                let updated = false;
+                tasks.forEach(function(task) {
+                    if ((task.status === 'delay' || task.status === 'await') && task.targetDate) {
+                        const targetDate = createDate(task.targetDate);
+                        if (isBeforeOrSame(targetDate, now)) {
+                            task.status = 'inbox';
+                            task.modifiedDate = new Date();
+                            task.order = getMaxOrder(tasks, 'inbox') + 1;
+                            task.targetDate = null;
+                            updated = true;
                         }
-                    });
-                    if (updated) {
-                        postMessage({ action: 'refreshTasks', tasks });
                     }
-                }, 1000);
-            }
-
-            function getMaxOrder(tasks, status) {
-                const filtered = tasks.filter(task => task.status === status);
-                if (filtered.length === 0) return 0;
-                return Math.max(...filtered.map(task => task.order || 0));
-            }
-            `;
-            const blob = new Blob([workerCode], { type: 'application/javascript' });
-            const workerURL = URL.createObjectURL(blob);
-            worker = new Worker(workerURL);
-            worker.onmessage = function(event) {
-                if (event.data.action === 'refreshTasks') {
-                    tasks = event.data.tasks;
-                    saveAndRenderTasks();
+                });
+                if (updated) {
+                    postMessage({ action: 'refreshTasks', tasks: tasks });
                 }
-            };
-            worker.postMessage({ action: 'updateTasks', tasks });
+            }, 1000);
         }
+
+        function getMaxOrder(tasks, status) {
+            const filtered = tasks.filter(function(task) {
+                return task.status === status;
+            });
+            if (filtered.length === 0) return 0;
+            return Math.max.apply(null, filtered.map(function(task) {
+                return task.order || 0;
+            }));
+        }
+    `;
+
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    const workerURL = URL.createObjectURL(blob);
+    worker = new Worker(workerURL);
+
+    worker.onmessage = function(event) {
+        if (event.data.action === 'refreshTasks') {
+            tasks = event.data.tasks;
+            saveAndRenderTasks();
+        }
+    };
+
+    worker.postMessage({ action: 'updateTasks', tasks: tasks });
+}
+
+
 
         function initializeSortable() {
             const taskList = document.getElementById('task-list');
@@ -902,11 +912,13 @@
                     const oldIndex = evt.oldIndex;
                     const newIndex = evt.newIndex;
 
-                    let filteredTasks = tasks.filter(task => task.status === 'inbox');
+                    let filteredTasks = tasks.filter(function(task) {
+                        return task.status === 'inbox';
+                    });
                     const movedTask = filteredTasks.splice(oldIndex, 1)[0];
                     filteredTasks.splice(newIndex, 0, movedTask);
 
-                    filteredTasks.forEach((task, index) => {
+                    filteredTasks.forEach(function(task, index) {
                         task.order = index + 1;
                     });
 
@@ -928,17 +940,17 @@
         }
 
         function updateCountdowns() {
-            tasks.forEach(task => {
+            tasks.forEach(function(task) {
                 if (task.status === 'delay' || task.status === 'await') {
                     const remaining = getRemainingTime(task.targetDate);
-                    const taskEl = document.querySelector(`[data-task-id="${task.id}"]`);
+                    const taskEl = document.querySelector('[data-task-id="' + task.id + '"]');
                     if (taskEl) {
                         const timerEl = taskEl.querySelector('.timer');
                         if (timerEl) {
                             if (remaining > 0) {
-                                timerEl.innerHTML = \`<i class="fas fa-clock"></i> \${formatTime(remaining)}\`;
+                                timerEl.innerHTML = '<i class="fas fa-clock"></i> ' + formatTime(remaining);
                             } else {
-                                timerEl.innerHTML = \`<i class="fas fa-clock"></i> 00:00:00\`;
+                                timerEl.innerHTML = '<i class="fas fa-clock"></i> 00:00:00';
                             }
                         }
                     }
@@ -962,52 +974,114 @@
             let parts = [];
 
             if (days > 0) {
-                parts.push(\`\${days}j\`);
-                if (hours > 0) parts.push(\`\${hours}h\`);
+                parts.push(days + 'j');
+                if (hours > 0) parts.push(hours + 'h');
             } else if (hours > 0) {
-                parts.push(\`\${hours}h\`);
-                if (minutes > 0) parts.push(\`\${minutes}m\`);
+                parts.push(hours + 'h');
+                if (minutes > 0) parts.push(minutes + 'm');
             } else if (minutes > 0) {
-                parts.push(\`\${minutes}m\`);
-                if (seconds > 0) parts.push(\`\${seconds}s\`);
+                parts.push(minutes + 'm');
+                if (seconds > 0) parts.push(seconds + 's');
             } else {
-                parts.push(\`\${seconds}s\`);
+                parts.push(seconds + 's');
             }
 
             return parts.join(' ');
         }
 
-        function modifyDeadline(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (!task) return;
-            const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
-            let newTargetDate = null;
+// Custom date expression parser
+// Activer la locale française
+Sugar.Date.setLocale('fr');
 
-            while (true) {
-                const dateInput = prompt(\`Modifier la deadline pour "\${task.name}". Veuillez fournir une nouvelle date (ex : demain, lundi prochain, le 25 décembre 2024) :\`);
-                if (dateInput === null) return;
-                const parsedDate = Sugar.Date.create(dateInput, { from: baseDate });
-                if (parsedDate && parsedDate > baseDate) {
-                    newTargetDate = parsedDate;
-                    task.targetDate = newTargetDate;
-                    task.modifiedDate = new Date();
-                    break;
-                }
-                // Si Sugar ne peut pas parser directement la date, essayer de parser une période
-                const period = parsePeriod(dateInput, baseDate);
-                if (period) {
-                    newTargetDate = getRandomWorkingDay(period.start, period.end);
-                    if (newTargetDate) {
-                        task.targetDate = newTargetDate;
-                        task.modifiedDate = new Date();
-                        break;
-                    }
-                }
-                alert("Veuillez fournir une date valide et future.");
-            }
+// Fonction générique pour parser les dates
+function parseDateExpression(input, baseDate) {
+    input = input.toLowerCase().trim();
+    const now = baseDate || new Date();  // Utilise la date actuelle ou la date de base fournie
 
-            saveAndRenderTasks();
+    // Gérer les cas de "demain" ou "tomorrow"
+    if (input === "demain" || input === "tomorrow") {
+        return Sugar.Date.advance(now, { days: 1 });
+    } else if (input === "après-demain" || input === "day after tomorrow" || input === "apres demain" || input === "après demain") {
+        return Sugar.Date.advance(now, { days: 2 });
+    }
+
+    // Gérer les expressions relatives comme "dans 3 heures", "dans 2 minutes"
+    const matchRelativeTime = input.match(/dans\s+(\d+)\s+(minutes?|heures?|jours?|secondes?)/);
+    if (matchRelativeTime) {
+        const value = parseInt(matchRelativeTime[1], 10);
+        const unit = matchRelativeTime[2];
+
+        let futureDate;
+        switch (unit) {
+            case 'minute':
+            case 'minutes':
+                futureDate = Sugar.Date.advance(now, { minutes: value });
+                break;
+            case 'heure':
+            case 'heures':
+                futureDate = Sugar.Date.advance(now, { hours: value });
+                break;
+            case 'jour':
+            case 'jours':
+                futureDate = Sugar.Date.advance(now, { days: value });
+                break;
+            case 'seconde':
+            case 'secondes':
+                futureDate = Sugar.Date.advance(now, { seconds: value });
+                break;
         }
+
+        // Retourner la date future validée
+        if (Sugar.Date.isValid(futureDate) && Sugar.Date.isFuture(futureDate)) {
+            return futureDate;
+        }
+        return null;
+    }
+
+    // Tenter de parser des expressions standards comme "lundi prochain"
+    const parsedDate = Sugar.Date.create(input, { from: now });
+    
+    // Vérification étape par étape pour mieux comprendre ce qui échoue
+    console.log("Parsed Date:", parsedDate);
+    console.log("Is Valid:", Sugar.Date.isValid(parsedDate));
+    console.log("Is Future:", Sugar.Date.isFuture(parsedDate));
+
+    if (Sugar.Date.isValid(parsedDate) && Sugar.Date.isFuture(parsedDate)) {
+        return parsedDate;
+    }
+
+    return null;  // Retourner null si la date n'est pas valide
+}
+
+// Fonction pour modifier la deadline d'une tâche (dans delay/await ou tout autre onglet)
+function modifyDeadline(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
+    let newTargetDate = null;
+
+    while (true) {
+        const dateInput = prompt(`Modifier la deadline pour "${task.name}". Veuillez fournir une nouvelle date (ex : demain, lundi prochain, dans 3 heures) :`);
+        if (dateInput === null) return;
+
+        const parsedDate = parseDateExpression(dateInput, baseDate);  // Appeler la fonction pour parser l'entrée utilisateur
+        
+        if (parsedDate) {
+            newTargetDate = parsedDate;
+            task.targetDate = newTargetDate;
+            task.modifiedDate = new Date();  // Mettre à jour la date modifiée
+            break;
+        } else {
+            alert("Veuillez fournir une date valide et future.");
+        }
+    }
+
+    saveAndRenderTasks();  // Sauvegarder et rendre la nouvelle tâche
+}
+
+
+
     </script>
 </body>
 </html>
