@@ -2,9 +2,16 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Linrd</title>
+    <!-- Inclusion de Font Awesome pour les icônes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Inclusion de SortableJS pour le glisser-déposer -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <!-- Inclusion de Sugar.js via jsDelivr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/sugar.min.js"></script>
     <style>
+        /* Styles existants inchangés */
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -16,205 +23,238 @@
 
         #task-form {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             gap: 10px;
-            padding: 20px;
+            padding: 15px;
             background: #007bff;
             color: #fff;
-            align-items: center;
-
-
         }
 
         #task-form input {
             padding: 10px;
-            font-size: 24px; /* Taille de la police augmentée */
+            font-size: 18px;
             border-radius: 3px;
             border: 1px solid #ccc;
-            flex: 1;
-            min-width: 200px;
         }
 
         #task-form button {
-            padding: 10px 20px;
+            padding: 10px;
+            font-size: 18px;
             background: #28a745;
             color: white;
             border: none;
             cursor: pointer;
             border-radius: 3px;
-            font-size: 24px; /* Taille de la police augmentée */
+        }
+
+        #tabs {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background-color: #007bff;
+        }
+
+        #tabs button {
+            padding: 10px;
+            font-size: 18px;
+            background: #fff;
+            color: #007bff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            flex: 1;
+            margin: 0 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #tabs button.active {
+            background-color: #28a745;
+            color: #fff;
         }
 
         #visualization {
             flex: 1;
-            padding: 30px;
+            padding: 15px;
             overflow-y: auto;
         }
 
         .task-list {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-
+            gap: 15px;
         }
 
         .task {
             background: #ffffff;
-            padding: 20px;
+            padding: 15px;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            word-wrap: break-word;
+            position: relative;
             display: flex;
             flex-direction: column;
-
         }
 
         .task.collapsed .description,
         .task.collapsed .comments,
-        .task.collapsed .buttons {
+        .task.collapsed .timer {
             display: none;
         }
 
-        .task h3 {
-            margin: 0;
-            font-size: 28px; /* Taille de la police augmentée */
-            color: #333;
+        .description {
+            white-space: pre-wrap;
+            word-wrap: break-word;
             cursor: pointer;
-        }
-
-        .task .description {
-            font-size: 20px; /* Taille de la police augmentée */
-            color: #666;
-            margin-bottom: 10px;
         }
 
         .task .buttons {
             display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-
-        .task .buttons i {
-            cursor: pointer;
-            font-size: 30px; /* Taille de l'icône augmentée */
-            color: #555;
-            padding: 15px;
-            background: #f1f1f1;
-            border-radius: 5px;
-        }
-
-        .btn-done i { color: #28a745; }
-        .btn-cancel i { color: #d9534f; }
-        .btn-delay i { color: #ffc107; }
-        .btn-await i { color: #17a2b8; }
-        .btn-doc i { color: #6f42c1; }
-        .btn-subtask i { color: #007bff; }
-        .btn-delete i { color: #dc3545; }
-
-        .comments {
-            background: #f1f1f1;
-            padding: 15px;
-            border-radius: 5px;
+            justify-content: flex-start;
+            gap: 10px;
+            flex-wrap: wrap;
             margin-top: 10px;
-            max-height: 200px;
-            overflow-y: auto;
         }
 
-        .comment {
+        .task .buttons button {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .comment span {
-            flex: 1;
-            word-break: break-word;
-            cursor: pointer;
-            font-size: 18px; /* Taille de la police augmentée */
-        }
-
-        .comment input {
-            flex: 1;
-            margin-left: 10px;
+            gap: 5px;
             padding: 10px;
-            font-size: 18px; /* Taille de la police augmentée */
-        }
-
-        #filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        #filters select {
-            padding: 10px;
-            font-size: 24px; /* Taille de la police augmentée */
-        }
-
-        #reporting, #clear-memory, #import-data, #fork-app, #export-data {
-            margin: 20px 0;
-        }
-
-        #reporting button, #clear-memory button, #import-data button, #fork-app button, #export-data button {
-            background: #28a745;
-            color: white;
-            padding: 20px;
+            font-size: 16px;
+            color: #fff;
             border: none;
             cursor: pointer;
+            border-radius: 3px;
+            justify-content: flex-start;
+            flex: 1;
+            max-width: 150px;
+            transition: opacity 0.3s;
+            opacity: 0.8;
+        }
+
+        .task .buttons button:hover {
+            opacity: 1;
+        }
+
+        .btn-done { background-color: #28a745; }
+        .btn-cancel { background-color: #d9534f; }
+        .btn-delay { background-color: #ffc107; color: #000; }
+        .btn-await { background-color: #17a2b8; }
+        .btn-doc { background-color: #6f42c1; }
+        .btn-delete { background-color: #dc3545; }
+
+        .comments {
+            margin-top: 10px;
+            padding-left: 20px;
+            border-left: 3px solid #007bff;
+        }
+
+        .comment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1px 0;
+        }
+
+        .comment-item p {
+            cursor: pointer;
+            flex: 1;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .comment-item .convert-button,
+        .comment-item .delete-button {
+            background-color: #007bff;
+            color: white;
+            padding: 5px;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .comment-item .delete-button {
+            background-color: #d9534f;
+        }
+
+        .toggle-icon {
+            cursor: pointer;
+            margin-left: 10px;
+            color: #555;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            margin-right: 10px;
+            color: #555;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .timer {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: #555;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+        #export-import {
+            position: relative;
+            padding: 15px;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            overflow: hidden;
+            max-height: 300px;
+        }
+
+        #export-import.collapsed {
+            max-height: 50px;
+            padding: 10px;
+        }
+
+        #export-import button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
             border-radius: 5px;
-            font-size: 24px; /* Taille de la police augmentée */
-            width: 100%;
+            cursor: pointer;
         }
 
-        #clear-memory button { background: #ff4d4d; }
-
-        @media (max-width: 768px) {
-            #task-form {
-                flex-direction: column;
-            }
-
-            #task-form input {
-                width: 100%;
-            }
-
-            #task-form button {
-                width: 100%;
-            }
-
-            .task .buttons {
-                flex-direction: row;
-            }
+        #export-import button:hover {
+            opacity: 0.9;
         }
 
-        @media (max-width: 1300px) {
-            #task-form {
-                flex-direction: column;
-            }
+        #export-import .btn-reset {
+            background-color: #dc3545;
+            color: white;
+        }
 
-            #task-form input {
-                width: 96%;
-                padding:20px;
- 
-            }
+        #export-import-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
 
-            #task-form button {
-                width: 100%;
-            }
-
-            #task-form input, #task-form button {
-                font-size: 26px; /* Augmenter la taille de la police sur mobile */
-            }
-
-            .task h3 {
-                font-size: 32px; /* Augmenter la taille de la police sur mobile */
-            }
-
-            .task .description {
-                font-size: 24px; /* Augmenter la taille de la police sur mobile */
-            }
-
-            .task .buttons i {
-                font-size: 40px; /* Augmenter la taille des icônes sur mobile */
-            }
+        #export-import-toggle:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -224,380 +264,750 @@
         <input type="text" id="new-task-description" placeholder="Description">
         <button type="submit">Ajouter</button>
     </form>
-    <div id="visualization">
-        <div id="filters">
-            <select id="status-filter" onchange="renderTasks()">
-                <option value="inbox">Inbox</option>
-                <option value="done">Done</option>
-                <option value="cancel">Cancel</option>
-                <option value="delay">Delay</option>
-                <option value="await">Await</option>
-                <option value="doc">Doc</option>
-            </select>
-        </div>
-        <div class="task-list" id="task-list"></div>
-        <div id="reporting">
-            <button onclick="generatePDF()">Télécharger le Rapport</button>
-        </div>
-        <div id="export-data">
-            <button onclick="exportData()">Exporter</button>
-        </div>
-        <div id="clear-memory">
-            <button onclick="backupAndClearMemory()">Effacer la Mémoire</button>
-        </div>
-        <div id="import-data">
-            <input type="file" id="import-file" style="display: none;" onchange="handleFileImport(event)">
-            <button onclick="importData()">Importer</button>
-        </div>
-        <div id="fork-app">
-            <button onclick="forkApplication()">Forker</button>
-        </div>
+
+    <div id="tabs">
+        <button onclick="changeTab('inbox')" class="active">Inbox</button>
+        <button onclick="changeTab('done')">Done</button>
+        <button onclick="changeTab('cancel')">Cancel</button>
+        <button onclick="changeTab('delay')">Delay</button>
+        <button onclick="changeTab('await')">Await</button>
+        <button onclick="changeTab('doc')">Doc</button>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <div id="visualization">
+        <div class="task-list" id="task-list"></div>
+    </div>
+
+    <div id="export-import">
+        <button id="export-import-toggle" onclick="toggleExportImport()">☰</button>
+        <button onclick="exportData()">Exporter les données</button>
+        <button onclick="document.getElementById('import-file').click()">Importer des données</button>
+        <input type="file" id="import-file" onchange="importData(event)" style="display:none;">
+        <button onclick="forkApplication()">Forker l'application</button>
+        <button class="btn-reset" onclick="resetInterface()">Réinitialiser</button>
+    </div>
+
     <script>
-class Task {
-    constructor(id, name, status = "inbox", description = "", comments = [], parentId = null, collapsed = true) {
-        this.id = id;
-        this.name = name;
-        this.status = status;
-        this.description = description;
-        this.comments = comments;
-        this.parentId = parentId;
-        this.collapsed = collapsed;
-        this.subTasks = [];
-    }
+        // Vérification de la disponibilité de Sugar.js
+        if (typeof Sugar === 'undefined') {
+            console.error("Sugar.js n'est pas chargé correctement. Veuillez vérifier l'inclusion du script.");
+        } else {
+            console.log("Sugar.js chargé avec succès :", Sugar);
+        }
 
-    toggleCollapse() {
-        this.collapsed = !this.collapsed;
-    }
+        let tasks = [];
+        let taskIdCounter = 0;
+        let currentTab = 'inbox';
+        let worker;
+        let countdownInterval;
 
-    addSubTask(subTask) {
-        this.subTasks.push(subTask);
-    }
+        window.addEventListener('load', function() {
+            const savedTasks = localStorage.getItem('tasks');
+            if (savedTasks) {
+                try {
+                    tasks = JSON.parse(savedTasks);
+                    const maxId = tasks.reduce((max, task) => (task.id > max ? task.id : max), 0);
+                    taskIdCounter = maxId + 1;
+                    renderTasks();
+                } catch (error) {
+                    console.error("Erreur lors du chargement des tâches :", error);
+                    tasks = [];
+                    taskIdCounter = 0;
+                }
+            }
+            const savedForm = localStorage.getItem('taskForm');
+            if (savedForm) {
+                const formData = JSON.parse(savedForm);
+                document.getElementById('new-task-name').value = formData.name || '';
+                document.getElementById('new-task-description').value = formData.description || '';
+            }
+            const exportImportCollapsed = localStorage.getItem('exportImportCollapsed');
+            if (exportImportCollapsed === 'true' || exportImportCollapsed === null) {
+                document.getElementById('export-import').classList.add('collapsed');
+            } else {
+                document.getElementById('export-import').classList.remove('collapsed');
+            }
+            initializeWorker();
+            startCountdown();
+        });
 
-    updateStatus(newStatus) {
-        this.status = newStatus;
-        this.updateSubTasksStatus(newStatus);
-    }
+        document.getElementById('new-task-name').addEventListener('input', saveForm);
+        document.getElementById('new-task-description').addEventListener('input', saveForm);
 
-    updateSubTasksStatus(newStatus) {
-        this.subTasks.forEach(subTask => {
-            if ((newStatus === 'done' && subTask.status !== 'cancel' && subTask.status !== 'doc') ||
-                (newStatus === 'cancel' && subTask.status !== 'done' && subTask.status !== 'doc')) {
-                subTask.updateStatus(newStatus);
+        function saveForm() {
+            const formData = {
+                name: document.getElementById('new-task-name').value,
+                description: document.getElementById('new-task-description').value
+            };
+            localStorage.setItem('taskForm', JSON.stringify(formData));
+        }
+
+        document.getElementById('task-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const name = document.getElementById('new-task-name').value.trim();
+            const description = document.getElementById('new-task-description').value.trim();
+            if (name) {
+                const now = new Date();
+                const task = {
+                    id: taskIdCounter++,
+                    name: name,
+                    description: description,
+                    comments: [],
+                    status: "inbox",
+                    createdDate: now,
+                    modifiedDate: now,
+                    collapsed: true,
+                    targetDate: null,
+                    parentId: null,
+                    order: getMaxOrder('inbox') + 1
+                };
+                tasks.push(task);
+                saveAndRenderTasks();
+                document.getElementById('new-task-name').value = '';
+                document.getElementById('new-task-description').value = '';
+                localStorage.removeItem('taskForm');
             }
         });
-    }
 
-    addComment(comment) {
-        this.comments.push(comment);
-    }
-}
+        function getMaxOrder(status) {
+            const filtered = tasks.filter(task => task.status === status);
+            if (filtered.length === 0) return 0;
+            return Math.max(...filtered.map(task => task.order || 0));
+        }
 
-let db;
-let tasks = [];
-let taskIdCounter = 0;
-const request = indexedDB.open("taskManager", 1);
-
-request.onupgradeneeded = function(event) {
-    db = event.target.result;
-    const store = db.createObjectStore("tasks", { keyPath: "id", autoIncrement: true });
-    store.createIndex("parentId", "parentId", { unique: false });
-};
-
-request.onsuccess = function(event) {
-    db = event.target.result;
-    loadTasksFromDB();
-};
-
-function loadTasksFromDB() {
-    const transaction = db.transaction(["tasks"], "readonly");
-    const store = transaction.objectStore("tasks");
-    const request = store.getAll();
-    request.onsuccess = function(event) {
-        const dbTasks = event.target.result;
-        tasks = [];
-        taskIdCounter = 0;
-        dbTasks.forEach(dbTask => {
-            const task = new Task(dbTask.id, dbTask.name, dbTask.status, dbTask.description, dbTask.comments, dbTask.parentId, dbTask.collapsed);
-            tasks.push(task);
-            if (dbTask.id >= taskIdCounter) {
-                taskIdCounter = dbTask.id + 1;
+        function saveAndRenderTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            renderTasks();
+            if (worker) {
+                worker.postMessage({ action: 'updateTasks', tasks });
             }
-        });
-        renderTasks();
-    };
-}
+        }
 
-function saveTasksToDB() {
-    const transaction = db.transaction(["tasks"], "readwrite");
-    const store = transaction.objectStore("tasks");
-    store.clear();
-    tasks.forEach(task => {
-        store.put({
-            id: task.id,
-            name: task.name,
-            status: task.status,
-            description: task.description,
-            comments: task.comments,
-            parentId: task.parentId,
-            collapsed: task.collapsed
-        });
-    });
-}
+        function renderTasks() {
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
 
-function renderTasks() {
-    const taskList = document.getElementById("task-list");
-    const statusFilter = document.getElementById("status-filter").value;
-    taskList.innerHTML = "";
+            let filteredTasks = tasks.filter(task => task.status === currentTab);
+            if (currentTab === 'inbox') {
+                filteredTasks.sort((a, b) => (a.order || 0) - (b.order || 0));
+            } else {
+                filteredTasks.sort((a, b) => new Date(b.modifiedDate) - new Date(a.modifiedDate));
+            }
 
-    const filteredTasks = tasks.filter(task => 
-        task.status === statusFilter || 
-        (task.parentId !== null && tasks.find(p => p.id === task.parentId).status === statusFilter)
-    );
+            filteredTasks.forEach(task => {
+                const taskEl = document.createElement('div');
+                taskEl.className = `task ${task.collapsed ? 'collapsed' : ''}`;
+                taskEl.setAttribute('data-task-id', task.id);
 
-    filteredTasks.forEach(task => createTaskElement(task, 0));
-}
+                const parentChain = getParentChain(task);
+                const fullTitle = parentChain.length > 0 ? `${parentChain.join(' > ')} > ${task.name}` : task.name;
+                const parentString = parentChain.length > 0 ? `Parents: ${parentChain.join(' > ')}` : '';
 
-function createTaskElement(task, level) {
-    const taskEl = document.createElement("div");
-    taskEl.className = `task ${task.collapsed ? 'collapsed' : ''}`;
-    taskEl.style.marginLeft = (level * 20) + "px";
-    taskEl.innerHTML = `
-        <h3 onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'} ${task.name}</h3>
-        <p class="description">${task.description || "Ajouter une description"}</p>
-        <div class="comments">
-            ${task.comments.map((comment, index) => `
-                <div class="comment">
-                    <span onclick="editComment(${task.id}, ${index})">${new Date(comment.date).toLocaleString()}: ${comment.text}</span>
-                    <input type="text" class="edit-comment" placeholder="Modifier le commentaire..." style="display:none" onkeypress="if(event.key==='Enter'){editComment(${task.id}, ${index}, this.value)}">
-                    <button onclick="editComment(${task.id}, ${index}, this.previousElementSibling.value)" style="display:none">OK</button>
-                    <button onclick="confirmDeleteComment(${task.id}, ${index})">Supprimer</button>
+                let timerHtml = '';
+                if (task.status === 'delay' || task.status === 'await') {
+                    const remaining = getRemainingTime(task.targetDate);
+                    if (remaining > 0) {
+                        timerHtml = `<div class="timer" onclick="modifyDeadline(${task.id})"><i class="fas fa-clock"></i> ${formatTime(remaining)}</div>`;
+                    } else {
+                        timerHtml = `<div class="timer" onclick="modifyDeadline(${task.id})"><i class="fas fa-clock"></i> 00:00:00</div>`;
+                    }
+                }
+
+                taskEl.innerHTML = `
+                    <div style="display: flex; align-items: center;">
+                        <i class="fas fa-bars drag-handle"></i>
+                        <h3 style="flex: 1;" onclick="editTaskName(${task.id})">${escapeHTML(fullTitle)}</h3>
+                        <span class="toggle-icon" onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'}</span>
+                    </div>
+                    <p style="font-size: 0.9em; color: #555;">${escapeHTML(parentString)}</p>
+                    ${timerHtml}
+                    <pre class="description" onclick="editTaskDescription(${task.id})">${escapeHTML(task.description || 'Aucune description')}</pre>
+                    <div class="buttons">
+                        ${renderActionButton(task, 'done')}
+                        ${renderActionButton(task, 'cancel')}
+                        ${renderActionButton(task, 'delay')}
+                        ${renderActionButton(task, 'await')}
+                        ${renderActionButton(task, 'doc')}
+                        <button class="btn-delete" onclick="confirmDelete(${task.id})"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                    <div class="comments" id="comments-${task.id}">
+                        <input type="text" placeholder="Ajouter un commentaire" oninput="saveCommentInput(${task.id}, this.value)" value="${escapeHTML(getSavedCommentInput(task.id))}" onkeypress="addComment(event, ${task.id})">
+                        ${renderComments(task.comments, task.id)}
+                    </div>
+                `;
+                taskList.appendChild(taskEl);
+            });
+
+            if (currentTab === 'inbox') {
+                initializeSortable();
+            }
+        }
+
+        function escapeHTML(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        function renderActionButton(task, action) {
+            if (task.status === action) {
+                return '';
+            }
+            if (action === 'inbox') {
+                return '';
+            }
+            return `<button class="btn-${action}" onclick="handleAction(${task.id}, '${action}')"><i class="fas fa-${getIcon(action)}"></i> ${capitalize(action)}</button>`;
+        }
+
+        function getIcon(action) {
+            const icons = {
+                'done': 'check',
+                'cancel': 'times',
+                'delay': 'clock',
+                'await': 'hourglass',
+                'doc': 'file-alt'
+            };
+            return icons[action] || 'question';
+        }
+
+        function capitalize(word) {
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+
+        function renderComments(comments, taskId) {
+            if (!comments || comments.length === 0) {
+                return '<p>Aucun commentaire.</p>';
+            }
+            const sortedComments = comments.slice().sort((a, b) => b.id - a.id);
+            return sortedComments.map(comment => `
+                <div class="comment-item">
+                    <p onclick="editComment(${taskId}, ${comment.id})">${escapeHTML(comment.text)}</p>
+                    <span>${comment.date}</span>
+                    <button class="convert-button" onclick="convertCommentToTask(${taskId}, ${comment.id})">Convertir en tâche</button>
+                    <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Supprimer</button>
                 </div>
-            `).join("")}
-            <input type="text" placeholder="Ajouter un commentaire..." onkeypress="if(event.key==='Enter'){addComment(event, ${task.id})}">
-            <button onclick="addComment(event, ${task.id})">OK</button>
-        </div>
-        <div class="buttons">
-            <button class="btn-done" onclick="promptCommentAndAction(${task.id}, 'done')">Done</button>
-            <button class="btn-cancel" onclick="promptCommentAndAction(${task.id}, 'cancel')">Cancel</button>
-            <button class="btn-delay" onclick="promptCommentAndAction(${task.id}, 'delay')">Delay</button>
-            <button class="btn-await" onclick="promptCommentAndAction(${task.id}, 'await')">Await</button>
-            <button class="btn-doc" onclick="promptCommentAndAction(${task.id}, 'doc')">Doc</button>
-            <button class="btn-subtask" onclick="addSubTask(${task.id})">Ajouter sous-tâche</button>
-            ${task.subTasks.length === 0 ? `<button class="btn-delete" onclick="confirmDeleteTask(${task.id})">Supprimer</button>` : ''}
-        </div>
-    `;
-    document.getElementById("task-list").appendChild(taskEl);
-    task.subTasks.forEach(subTask => createTaskElement(subTask, level + 1));
-}
+            `).join('');
+        }
 
-function toggleTask(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-        task.toggleCollapse();
-        saveTasksToDB();
-        renderTasks();
-    }
-}
+        function toggleTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.collapsed = !task.collapsed;
+                saveAndRenderTasks();
+            }
+        }
 
-function promptCommentAndAction(taskId, actionType) {
-    const comment = prompt("Ajoutez un commentaire pour cette action :");
-    if (comment) {
-        const task = tasks.find(t => t.id === taskId);
-        if (task) {
-            task.addComment({ text: comment, date: new Date().toISOString() });
+        function changeTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll("#tabs button").forEach(button => button.classList.remove("active"));
+            const activeButton = document.querySelector(`#tabs button[onclick="changeTab('${tab}')"]`);
+            if (activeButton) {
+                activeButton.classList.add("active");
+            }
+            renderTasks();
+        }
+
+        function handleAction(taskId, actionType) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) {
+                console.error(`Tâche avec ID ${taskId} non trouvée.`);
+                return;
+            }
+            let targetDate = null;
+
             if (actionType === 'delay' || actionType === 'await') {
-                const durationInput = prompt("Indiquez un délai (par exemple, '2 heures', 'demain', 'lundi prochain'):");
+                const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
+                let parsedDate = null;
+
+                while (true) {
+                    const dateInput = prompt(`Veuillez fournir une date pour "${actionType}" (ex : demain, lundi prochain, le 25 décembre 2024) :`);
+                    if (dateInput === null) return;
+                    parsedDate = Sugar.Date.create(dateInput, { from: baseDate });
+                    if (parsedDate && parsedDate > baseDate) {
+                        targetDate = parsedDate;
+                        task.targetDate = targetDate;
+                        task.modifiedDate = new Date();
+                        break;
+                    }
+                    // Si Sugar ne peut pas parser directement la date, essayer de parser une période
+                    const period = parsePeriod(dateInput, baseDate);
+                    if (period) {
+                        targetDate = getRandomWorkingDay(period.start, period.end);
+                        if (targetDate) {
+                            task.targetDate = targetDate;
+                            task.modifiedDate = new Date();
+                            break;
+                        }
+                    }
+                    alert("Veuillez fournir une date valide et future.");
+                }
+
+                while (true) {
+                    const comment = prompt(`Veuillez ajouter un commentaire pour "${actionType}" :`);
+                    if (comment === null) return;
+                    if (comment.trim() !== "") {
+                        addCommentToTask(taskId, comment.trim());
+                        break;
+                    }
+                    alert("Le commentaire est obligatoire.");
+                }
+                task.status = actionType;
+                task.order = undefined;
+            } else if (actionType === 'done') {
+                while (true) {
+                    const comment = prompt(`Veuillez ajouter un commentaire pour "${actionType}" :`);
+                    if (comment === null) return;
+                    if (comment.trim() !== "") {
+                        addCommentToTask(taskId, comment.trim());
+                        break;
+                    }
+                    alert("Le commentaire est obligatoire pour 'Done'.");
+                }
+                task.status = actionType;
+                task.order = undefined;
+                task.modifiedDate = new Date();
+            } else if (actionType === 'cancel' || actionType === 'doc') {
+                const comment = prompt(`Voulez-vous ajouter un commentaire pour "${actionType}" ? (laisser vide pour ignorer)`);
+                if (comment && comment.trim() !== "") {
+                    addCommentToTask(taskId, comment.trim());
+                }
+                task.status = actionType;
+                task.order = undefined;
+                task.modifiedDate = new Date();
             }
-            updateTaskStatus(taskId, actionType);
-            saveTasksToDB();
-            renderTasks();
+
+            saveAndRenderTasks();
         }
-    }
-}
 
-function updateTaskStatus(taskId, newStatus) {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-        task.updateStatus(newStatus);
-        saveTasksToDB();
-        renderTasks();
-    }
-}
+        function parsePeriod(input, baseDate) {
+            // Exemple de parsing de période : "dans les deux prochaines semaines"
+            // Cette implémentation est basique et peut être améliorée selon les besoins
+            const regex = /dans\s+les\s+(\d+)\s+prochain(?:es|e)?\s+(semaines|jours|mois)/i;
+            const match = input.match(regex);
+            if (!match) return null;
 
-function addComment(event, taskId) {
-    const input = event.target.previousElementSibling;
-    const commentText = input.value.trim();
-    if (commentText) {
-        const task = tasks.find(t => t.id === taskId);
-        if (task) {
-            task.addComment({ text: commentText, date: new Date().toISOString() });
-            saveTasksToDB();
-            renderTasks();
-            input.value = "";
-        }
-    }
-}
+            const quantity = parseInt(match[1], 10);
+            const unit = match[2].toLowerCase();
+            let endDate = new Date(baseDate);
 
-function confirmDeleteTask(taskId) {
-    if (confirm("Êtes-vous sûr de vouloir supprimer cette tâche ?")) {
-        deleteTask(taskId);
-    }
-}
-
-function deleteTask(taskId) {
-    const taskIndex = tasks.findIndex(t => t.id === taskId);
-    if (taskIndex !== -1) {
-        tasks.splice(taskIndex, 1);
-        saveTasksToDB();
-        renderTasks();
-    }
-}
-
-function confirmDeleteComment(taskId, commentIndex) {
-    if (confirm("Êtes-vous sûr de vouloir supprimer ce commentaire ?")) {
-        deleteComment(taskId, commentIndex);
-    }
-}
-
-function deleteComment(taskId, commentIndex) {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-        task.comments.splice(commentIndex, 1);
-        saveTasksToDB();
-        renderTasks();
-    }
-}
-
-function importData() {
-    document.getElementById('import-file').click();
-}
-
-function handleFileImport(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                tasks = data.map(taskData => new Task(
-                    taskData.id,
-                    taskData.name,
-                    taskData.status,
-                    taskData.description,
-                    taskData.comments,
-                    taskData.parentId,
-                    taskData.collapsed
-                ));
-                saveTasksToDB();
-                renderTasks();
-            } catch (error) {
-                alert("Erreur lors de l'importation des données : " + error.message);
+            switch(unit) {
+                case 'jours':
+                    endDate = Sugar.Date.add(endDate, { days: quantity });
+                    break;
+                case 'semaines':
+                    endDate = Sugar.Date.add(endDate, { weeks: quantity });
+                    break;
+                case 'mois':
+                    endDate = Sugar.Date.add(endDate, { months: quantity });
+                    break;
+                default:
+                    return null;
             }
-        };
-        reader.readAsText(file);
-    }
-}
 
-function exportData() {
-    const data = JSON.stringify(tasks);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "tasks_export.json";
-    a.click();
-}
-
-function backupAndClearMemory() {
-    if (confirm("Voulez-vous sauvegarder avant de supprimer toutes les tâches ?")) {
-        const data = JSON.stringify(tasks);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "tasks_backup.json";
-        a.click();
-        clearMemory();
-    }
-}
-
-function clearMemory() {
-    tasks = [];
-    saveTasksToDB();
-    renderTasks();
-}
-
-async function generatePDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const taskList = document.getElementById("task-list");
-    const tasksElements = taskList.querySelectorAll(".task");
-    let y = 10;
-
-    tasksElements.forEach(taskEl => {
-        const indent = parseInt(taskEl.style.marginLeft) / 20;
-        const title = taskEl.querySelector("h3").innerText;
-        const status = taskEl.querySelector("p").innerText;
-        doc.text(`${'  '.repeat(indent)}- ${title} (${status})`, 10, y);
-        y += 10;
-        const comments = taskEl.querySelectorAll(".comment span");
-        comments.forEach(comment => {
-            doc.text(`${'  '.repeat(indent + 1)}• ${comment.innerText}`, 10, y);
-            y += 10;
-        });
-        y += 5;
-        if (y > 280) {
-            doc.addPage();
-            y = 10;
+            return { start: baseDate, end: endDate };
         }
-    });
 
-    doc.save("rapport_taches.pdf");
-}
-
-function addSubTask(parentId) {
-    const subTaskName = prompt("Nom de la sous-tâche :");
-    if (subTaskName) {
-        const parentTask = tasks.find(task => task.id === parentId);
-        if (parentTask) {
-            const subTask = new Task(taskIdCounter++, subTaskName, "inbox", "", [], parentId);
-            parentTask.addSubTask(subTask);
-            tasks.push(subTask);
-            saveTasksToDB();
-            renderTasks();
+        function getRandomWorkingDay(start, end) {
+            const workingDays = [];
+            let current = new Date(start);
+            while (Sugar.Date.compare(current, end) <= 0) {
+                const day = Sugar.Date.getDay(current);
+                if (day !== 0 && day !== 6) { // Exclure les dimanches (0) et samedis (6)
+                    workingDays.push(new Date(current));
+                }
+                current = Sugar.Date.add(current, { days: 1 });
+            }
+            if (workingDays.length === 0) return null;
+            const randomIndex = Math.floor(Math.random() * workingDays.length);
+            return workingDays[randomIndex];
         }
-    }
-}
 
-setInterval(() => {
-    tasks.forEach(task => {
-        if ((task.status === 'delay' || task.status === 'await') && task.duration > 0) {
-            const elapsedTime = new Date() - new Date(task.startTime);
-            if (elapsedTime >= task.duration) {
-                updateTaskStatus(task.id, 'inbox');
+        function addComment(event, taskId) {
+            if (event.key === 'Enter') {
+                const commentText = event.target.value.trim();
+                if (commentText) {
+                    addCommentToTask(taskId, commentText);
+                    event.target.value = '';
+                    removeSavedCommentInput(taskId);
+                    saveAndRenderTasks();
+                }
             }
         }
-    });
-}, 1000);
 
-document.getElementById('task-form').addEventListener('submit', function(event) {
-    event.preventDefault();
-    const name = document.getElementById('new-task-name').value.trim();
-    const description = document.getElementById('new-task-description').value.trim();
+        function addCommentToTask(taskId, commentText) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.comments.push({
+                    id: Date.now(),
+                    text: commentText,
+                    date: Sugar.Date.format(new Date(), '%d/%m/%Y %H:%M:%S')
+                });
+                task.modifiedDate = new Date();
+            }
+        }
 
-    if (name) {
-        const newTask = new Task(taskIdCounter++, name, "inbox", description);
-        tasks.push(newTask);
-        saveTasksToDB();
-        renderTasks();
-        document.getElementById('new-task-name').value = '';
-        document.getElementById('new-task-description').value = '';
-    } else {
-        alert('Le nom de la tâche est obligatoire.');
-    }
-});
+        function editTaskName(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                const newName = prompt("Éditer le nom de la tâche :", task.name);
+                if (newName !== null && newName.trim() !== "") {
+                    task.name = newName.trim();
+                    task.modifiedDate = new Date();
+                    saveAndRenderTasks();
+                }
+            }
+        }
+
+        function editTaskDescription(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                const newDescription = prompt("Éditer la description de la tâche :", task.description);
+                if (newDescription !== null) {
+                    task.description = newDescription.trim();
+                    task.modifiedDate = new Date();
+                    saveAndRenderTasks();
+                }
+            }
+        }
+
+        function editComment(taskId, commentId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                const comment = task.comments.find(c => c.id === commentId);
+                if (comment) {
+                    const newText = prompt("Éditer le commentaire :", comment.text);
+                    if (newText !== null && newText.trim() !== "") {
+                        comment.text = newText.trim();
+                        comment.date = Sugar.Date.format(new Date(), '%d/%m/%Y %H:%M:%S');
+                        task.modifiedDate = new Date();
+                        saveAndRenderTasks();
+                    }
+                }
+            }
+        }
+
+        function confirmDelete(taskId) {
+            if (confirm("Êtes-vous sûr de vouloir supprimer cette tâche ? Toutes ses sous-tâches seront également supprimées.")) {
+                deleteTask(taskId);
+            }
+        }
+
+        function deleteTask(taskId) {
+            const deleteRecursively = (id) => {
+                const subTasks = tasks.filter(t => t.parentId === id);
+                subTasks.forEach(subTask => deleteRecursively(subTask.id));
+                tasks = tasks.filter(t => t.id !== id);
+            };
+            deleteRecursively(taskId);
+            saveAndRenderTasks();
+        }
+
+        function convertCommentToTask(taskId, commentId) {
+            const parentTask = tasks.find(t => t.id === taskId);
+            if (!parentTask) return;
+            const comment = parentTask.comments.find(c => c.id === commentId);
+            if (!comment) return;
+            const parentChain = getParentChain(parentTask);
+            const newTask = {
+                id: taskIdCounter++,
+                name: comment.text,
+                description: "",
+                comments: [],
+                status: "inbox",
+                createdDate: new Date(),
+                modifiedDate: new Date(),
+                collapsed: true,
+                targetDate: null,
+                parentId: parentTask.id,
+                order: getMaxOrder('inbox') + 1
+            };
+            tasks.push(newTask);
+            parentTask.comments = parentTask.comments.filter(c => c.id !== commentId);
+            parentTask.modifiedDate = new Date();
+            saveAndRenderTasks();
+        }
+
+        function getParentChain(task) {
+            let chain = [];
+            let currentTask = task;
+            while (currentTask.parentId !== null) {
+                const parentTask = tasks.find(t => t.id === currentTask.parentId);
+                if (parentTask) {
+                    chain.unshift(parentTask.name);
+                    currentTask = parentTask;
+                } else {
+                    break;
+                }
+            }
+            return chain;
+        }
+
+        function deleteComment(taskId, commentId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.comments = task.comments.filter(c => c.id !== commentId);
+                task.modifiedDate = new Date();
+                saveAndRenderTasks();
+            }
+        }
+
+        function saveCommentInput(taskId, value) {
+            localStorage.setItem('commentInput-' + taskId, value);
+        }
+
+        function getSavedCommentInput(taskId) {
+            return localStorage.getItem('commentInput-' + taskId) || '';
+        }
+
+        function removeSavedCommentInput(taskId) {
+            localStorage.removeItem('commentInput-' + taskId);
+        }
+
+        function resetInterface() {
+            if (confirm("Êtes-vous sûr de vouloir réinitialiser l'interface ? Toutes les tâches seront supprimées.")) {
+                tasks = [];
+                taskIdCounter = 0;
+                localStorage.removeItem('tasks');
+                localStorage.removeItem('taskForm');
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('commentInput-')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                saveAndRenderTasks();
+            }
+        }
+
+        function exportData() {
+            const data = JSON.stringify(tasks, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tasks.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedTasks = JSON.parse(e.target.result);
+                    if (Array.isArray(importedTasks)) {
+                        tasks = importedTasks.map(task => ({
+                            ...task,
+                            order: task.status === 'inbox' ? (task.order || getMaxOrder('inbox') + 1) : undefined
+                        }));
+                        const maxId = tasks.reduce((max, task) => (task.id > max ? task.id : max), 0);
+                        taskIdCounter = maxId + 1;
+                        saveAndRenderTasks();
+                        alert("Importation réussie !");
+                    } else {
+                        alert("Le fichier importé n'est pas valide.");
+                    }
+                } catch (error) {
+                    alert("Erreur lors de l'importation des données.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function forkApplication() {
+            const tasksData = JSON.stringify(tasks)
+                .replace(/\\/g, '\\\\')
+                .replace(/"/g, '\\"')
+                .replace(/'/g, "\\'")
+                .replace(/<\/script>/g, '<\\/script>');
+            const pageContent = document.documentElement.outerHTML.replace('</body>', `(function() {
+                const tasks = ${tasksData};
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                window.location.reload();
+            })();</body>`);
+            const blob = new Blob([pageContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function initializeWorker() {
+            const workerCode = `
+            importScripts('https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/sugar.min.js');
+
+            self.onmessage = function(event) {
+                if (event.data.action === 'updateTasks') {
+                    const tasks = event.data.tasks;
+                    monitorTasks(tasks);
+                }
+            };
+
+            function monitorTasks(tasks) {
+                setInterval(() => {
+                    const now = new Date();
+                    let updated = false;
+                    tasks.forEach(task => {
+                        if ((task.status === 'delay' || task.status === 'await') && task.targetDate) {
+                            const targetDate = Sugar.Date.create(task.targetDate);
+                            if (Sugar.Date.isBeforeOrSame(targetDate, now)) {
+                                task.status = 'inbox';
+                                task.modifiedDate = new Date();
+                                task.order = getMaxOrder(tasks, 'inbox') + 1;
+                                task.targetDate = null;
+                                updated = true;
+                            }
+                        }
+                    });
+                    if (updated) {
+                        postMessage({ action: 'refreshTasks', tasks });
+                    }
+                }, 1000);
+            }
+
+            function getMaxOrder(tasks, status) {
+                const filtered = tasks.filter(task => task.status === status);
+                if (filtered.length === 0) return 0;
+                return Math.max(...filtered.map(task => task.order || 0));
+            }
+            `;
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const workerURL = URL.createObjectURL(blob);
+            worker = new Worker(workerURL);
+            worker.onmessage = function(event) {
+                if (event.data.action === 'refreshTasks') {
+                    tasks = event.data.tasks;
+                    saveAndRenderTasks();
+                }
+            };
+            worker.postMessage({ action: 'updateTasks', tasks });
+        }
+
+        function initializeSortable() {
+            const taskList = document.getElementById('task-list');
+            Sortable.create(taskList, {
+                animation: 150,
+                handle: '.drag-handle',
+                onEnd: function (evt) {
+                    const itemEl = evt.item;
+                    const movedTaskId = parseInt(itemEl.getAttribute('data-task-id'));
+                    const oldIndex = evt.oldIndex;
+                    const newIndex = evt.newIndex;
+
+                    let filteredTasks = tasks.filter(task => task.status === 'inbox');
+                    const movedTask = filteredTasks.splice(oldIndex, 1)[0];
+                    filteredTasks.splice(newIndex, 0, movedTask);
+
+                    filteredTasks.forEach((task, index) => {
+                        task.order = index + 1;
+                    });
+
+                    saveAndRenderTasks();
+                }
+            });
+        }
+
+        function toggleExportImport() {
+            const exportImportDiv = document.getElementById('export-import');
+            exportImportDiv.classList.toggle('collapsed');
+            const isCollapsed = exportImportDiv.classList.contains('collapsed');
+            localStorage.setItem('exportImportCollapsed', isCollapsed.toString());
+        }
+
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(updateCountdowns, 1000);
+        }
+
+        function updateCountdowns() {
+            tasks.forEach(task => {
+                if (task.status === 'delay' || task.status === 'await') {
+                    const remaining = getRemainingTime(task.targetDate);
+                    const taskEl = document.querySelector(`[data-task-id="${task.id}"]`);
+                    if (taskEl) {
+                        const timerEl = taskEl.querySelector('.timer');
+                        if (timerEl) {
+                            if (remaining > 0) {
+                                timerEl.innerHTML = \`<i class="fas fa-clock"></i> \${formatTime(remaining)}\`;
+                            } else {
+                                timerEl.innerHTML = \`<i class="fas fa-clock"></i> 00:00:00\`;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getRemainingTime(targetDate) {
+            const now = new Date();
+            const target = Sugar.Date.create(targetDate);
+            return target - now > 0 ? target - now : 0;
+        }
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            let parts = [];
+
+            if (days > 0) {
+                parts.push(\`\${days}j\`);
+                if (hours > 0) parts.push(\`\${hours}h\`);
+            } else if (hours > 0) {
+                parts.push(\`\${hours}h\`);
+                if (minutes > 0) parts.push(\`\${minutes}m\`);
+            } else if (minutes > 0) {
+                parts.push(\`\${minutes}m\`);
+                if (seconds > 0) parts.push(\`\${seconds}s\`);
+            } else {
+                parts.push(\`\${seconds}s\`);
+            }
+
+            return parts.join(' ');
+        }
+
+        function modifyDeadline(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
+            let newTargetDate = null;
+
+            while (true) {
+                const dateInput = prompt(\`Modifier la deadline pour "\${task.name}". Veuillez fournir une nouvelle date (ex : demain, lundi prochain, le 25 décembre 2024) :\`);
+                if (dateInput === null) return;
+                const parsedDate = Sugar.Date.create(dateInput, { from: baseDate });
+                if (parsedDate && parsedDate > baseDate) {
+                    newTargetDate = parsedDate;
+                    task.targetDate = newTargetDate;
+                    task.modifiedDate = new Date();
+                    break;
+                }
+                // Si Sugar ne peut pas parser directement la date, essayer de parser une période
+                const period = parsePeriod(dateInput, baseDate);
+                if (period) {
+                    newTargetDate = getRandomWorkingDay(period.start, period.end);
+                    if (newTargetDate) {
+                        task.targetDate = newTargetDate;
+                        task.modifiedDate = new Date();
+                        break;
+                    }
+                }
+                alert("Veuillez fournir une date valide et future.");
+            }
+
+            saveAndRenderTasks();
+        }
     </script>
 </body>
 </html>
