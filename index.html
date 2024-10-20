@@ -387,69 +387,71 @@
         }
 
         function renderTasks() {
-            const taskList = document.getElementById('task-list');
-            taskList.innerHTML = '';
+    const taskList = document.getElementById('task-list');
+    taskList.innerHTML = '';
 
-            let filteredTasks = tasks.filter(function(task) {
-                return task.status === currentTab;
-            });
-            if (currentTab === 'inbox') {
-                filteredTasks.sort(function(a, b) {
-                    return (a.order || 0) - (b.order || 0);
-                });
+    let filteredTasks = tasks.filter(function(task) {
+        return task.status === currentTab;
+    });
+
+    // Pour l'onglet "Inbox", trier par date de création décroissante (les plus récentes en haut)
+    if (currentTab === 'inbox') {
+        filteredTasks.sort(function(a, b) {
+            return new Date(b.createdDate) - new Date(a.createdDate);  // Trier par date de création descendante
+        });
+    } else {
+        // Pour les autres catégories, trier par date de modification décroissante
+        filteredTasks.sort(function(a, b) {
+            return new Date(b.modifiedDate) - new Date(a.modifiedDate);  // Tri par date de modification descendante
+        });
+    }
+
+    filteredTasks.forEach(function(task) {
+        const taskEl = document.createElement('div');
+        taskEl.className = 'task ' + (task.collapsed ? 'collapsed' : '');
+        taskEl.setAttribute('data-task-id', task.id);
+
+        const parentChain = getParentChain(task);
+        const fullTitle = parentChain.length > 0 ? parentChain.join(' > ') + ' > ' + task.name : task.name;
+
+        let timerHtml = '';
+        if (task.status === 'delay' || task.status === 'await') {
+            const remaining = getRemainingTime(task.targetDate);
+            if (remaining > 0) {
+                timerHtml = '<div class="timer" onclick="modifyDeadline(' + task.id + ')"><i class="fas fa-clock"></i> ' + formatTime(remaining) + '</div>';
             } else {
-                filteredTasks.sort(function(a, b) {
-                    return new Date(b.modifiedDate) - new Date(a.modifiedDate);
-                });
-            }
-
-            filteredTasks.forEach(function(task) {
-                const taskEl = document.createElement('div');
-                taskEl.className = 'task ' + (task.collapsed ? 'collapsed' : '');
-                taskEl.setAttribute('data-task-id', task.id);
-
-                const parentChain = getParentChain(task);
-                const fullTitle = parentChain.length > 0 ? parentChain.join(' > ') + ' > ' + task.name : task.name;
-                const parentString = parentChain.length > 0 ? 'Parents: ' + parentChain.join(' > ') : '';
-
-                let timerHtml = '';
-                if (task.status === 'delay' || task.status === 'await') {
-                    const remaining = getRemainingTime(task.targetDate);
-                    if (remaining > 0) {
-                        timerHtml = '<div class="timer" onclick="modifyDeadline(' + task.id + ')"><i class="fas fa-clock"></i> ' + formatTime(remaining) + '</div>';
-                    } else {
-                        timerHtml = '<div class="timer" onclick="modifyDeadline(' + task.id + ')"><i class="fas fa-clock"></i> 00:00:00</div>';
-                    }
-                }
-
-                taskEl.innerHTML = 
-                    '<div style="display: flex; align-items: center;">' +
-                        '<i class="fas fa-bars drag-handle"></i>' +
-                        '<h3 style="flex: 1;" onclick="editTaskName(' + task.id + ')">' + escapeHTML(fullTitle) + '</h3>' +
-                        '<span class="toggle-icon" onclick="toggleTask(' + task.id + ')">' + (task.collapsed ? '▶️' : '▼') + '</span>' +
-                    '</div>' +
-                    '<p style="font-size: 0.9em; color: #555;">' + escapeHTML(parentString) + '</p>' +
-                    timerHtml +
-                    '<pre class="description" onclick="editTaskDescription(' + task.id + ')">' + escapeHTML(task.description || 'Aucune description') + '</pre>' +
-                    '<div class="buttons">' +
-                        renderActionButton(task, 'done') +
-                        renderActionButton(task, 'cancel') +
-                        renderActionButton(task, 'delay') +
-                        renderActionButton(task, 'await') +
-                        renderActionButton(task, 'doc') +
-                        '<button class="btn-delete" onclick="confirmDelete(' + task.id + ')"><i class="fas fa-trash"></i> Delete</button>' +
-                    '</div>' +
-                    '<div class="comments" id="comments-' + task.id + '">' +
-                        '<input type="text" placeholder="Ajouter un commentaire" oninput="saveCommentInput(' + task.id + ', this.value)" value="' + escapeHTML(getSavedCommentInput(task.id)) + '" onkeypress="addComment(event, ' + task.id + ')">' +
-                        renderComments(task.comments, task.id) +
-                    '</div>';
-                taskList.appendChild(taskEl);
-            });
-
-            if (currentTab === 'inbox') {
-                initializeSortable();
+                timerHtml = '<div class="timer" onclick="modifyDeadline(' + task.id + ')"><i class="fas fa-clock"></i> 00:00:00</div>';
             }
         }
+
+        taskEl.innerHTML = 
+            '<div style="display: flex; align-items: center;">' +
+                '<i class="fas fa-bars drag-handle"></i>' +
+                '<h3 style="flex: 1;" onclick="editTaskName(' + task.id + ')">' + escapeHTML(fullTitle) + '</h3>' +
+                '<span class="toggle-icon" onclick="toggleTask(' + task.id + ')">' + (task.collapsed ? '▶️' : '▼') + '</span>' +
+            '</div>' +
+            timerHtml +
+            '<pre class="description" onclick="editTaskDescription(' + task.id + ')">' + escapeHTML(task.description || 'Aucune description') + '</pre>' +
+            '<div class="buttons">' +
+                renderActionButton(task, 'done') +
+                renderActionButton(task, 'cancel') +
+                renderActionButton(task, 'delay') +
+                renderActionButton(task, 'await') +
+                renderActionButton(task, 'doc') +
+                '<button class="btn-delete" onclick="confirmDelete(' + task.id + ')"><i class="fas fa-trash"></i> Delete</button>' +
+            '</div>' +
+            '<div class="comments" id="comments-' + task.id + '">' +
+                '<input type="text" placeholder="Ajouter un commentaire" oninput="saveCommentInput(' + task.id + ', this.value)" value="' + escapeHTML(getSavedCommentInput(task.id)) + '" onkeypress="addComment(event, ' + task.id + ')">' +
+                renderComments(task.comments, task.id) +
+            '</div>';
+        taskList.appendChild(taskEl);
+    });
+
+    if (currentTab === 'inbox') {
+        initializeSortable();
+    }
+}
+
 
         function escapeHTML(text) {
             if (!text) return '';
@@ -1085,4 +1087,3 @@ function modifyDeadline(taskId) {
     </script>
 </body>
 </html>
-
