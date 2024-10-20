@@ -107,27 +107,15 @@
 
         .task .buttons {
             display: flex;
-            justify-content: flex-start;
+            flex-wrap: wrap;  /* Permet aux boutons de passer à la ligne si l'espace est insuffisant */
             gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
         }
-
+        
         .task .buttons button {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 10px;
-            font-size: 16px;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            border-radius: 3px;
-            justify-content: flex-start;
-            flex: 1;
-            max-width: 150px;
-            transition: opacity 0.3s;
-            opacity: 0.8;
+            flex: 1 1 auto;   /* Assure que les boutons prennent l'espace disponible mais passent à la ligne si nécessaire */
+            min-width: 100px; /* Définir une largeur minimale pour garder des boutons suffisamment larges */
+            max-width: 100%;  /* Limite la largeur des boutons pour qu'ils ne dépassent pas */
+            justify-content: center;  /* Centre le texte à l'intérieur du bouton */
         }
 
         .task .buttons button:hover {
