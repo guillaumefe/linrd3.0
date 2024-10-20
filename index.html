@@ -45,25 +45,29 @@
             border-radius: 3px;
         }
 
-        #tabs {
-            display: flex;
-            justify-content: space-around;
-            padding: 10px;
-            background-color: #007bff;
-        }
+#tabs {
+    display: flex;
+    flex-wrap: wrap; /* Permet aux boutons de passer à la ligne si nécessaire */
+    justify-content: space-between; /* Espace entre les boutons */
+    padding: 10px;
+    background-color: #007bff;
+}
 
-        #tabs button {
-            padding: 10px;
-            font-size: 18px;
-            background: #fff;
-            color: #007bff;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            flex: 1;
-            margin: 0 5px;
-            transition: background-color 0.3s, color 0.3s;
-        }
+#tabs button {
+    flex: 1;
+    margin: 5px;
+    padding: 10px;
+    font-size: 18px;
+    background: #fff;
+    color: #007bff;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s;
+    min-width: 120px; /* Largeur minimale pour les petits écrans */
+    text-align: center; /* Centrer le texte des boutons */
+}
+
 
         #tabs button.active {
             background-color: #28a745;
@@ -105,21 +109,29 @@
             cursor: pointer;
         }
 
-        .task.collapsed .buttons {
-            display: none;  /* Cache les boutons si la tâche est pliée */
-        }
-
         .task .buttons {
             display: flex;
-            flex-wrap: wrap;  /* Permet aux boutons de passer à la ligne si l'espace est insuffisant */
+            justify-content: flex-start;
             gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
         }
-        
+
         .task .buttons button {
-            flex: 1 1 auto;   /* Assure que les boutons prennent l'espace disponible mais passent à la ligne si nécessaire */
-            min-width: 100px; /* Définir une largeur minimale pour garder des boutons suffisamment larges */
-            max-width: 100%;  /* Limite la largeur des boutons pour qu'ils ne dépassent pas */
-            justify-content: center;  /* Centre le texte à l'intérieur du bouton */
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 10px;
+            font-size: 16px;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 3px;
+            justify-content: flex-start;
+            flex: 1;
+            max-width: 150px;
+            transition: opacity 0.3s;
+            opacity: 0.8;
         }
 
         .task .buttons button:hover {
