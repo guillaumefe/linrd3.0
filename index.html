@@ -105,6 +105,10 @@
             cursor: pointer;
         }
 
+        .task.collapsed .buttons {
+            display: none;  /* Cache les boutons si la tâche est pliée */
+        }
+
         .task .buttons {
             display: flex;
             flex-wrap: wrap;  /* Permet aux boutons de passer à la ligne si l'espace est insuffisant */
