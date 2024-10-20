@@ -160,6 +160,7 @@
 
         #clear-memory button { background: #ff4d4d; }
 
+        /* Responsive styles for smaller screens */
         @media (max-width: 768px) {
             #task-form {
                 flex-direction: column;
@@ -179,39 +180,22 @@
         }
 
         @media (max-width: 576px) {
-            #task-form input, #task-form button {
-                font-size: 16px;
-            }
-
-            #visualization {
-                padding: 10px;
-            }
-
-            .task {
-                padding: 10px;
-            }
-
-            .task h3 {
-                font-size: 16px;
-            }
-
-            .task .buttons {
-                font-size: 16px;
-            }
-
             #task-form {
                 flex-direction: column;
             }
 
             #task-form input {
-                font-size: 18px;
                 width: 100%;
                 margin-bottom: 10px;
             }
 
             #task-form button {
-                font-size: 18px;
                 width: 100%;
+            }
+
+            /* Larger font for mobile devices */
+            #task-form input, #task-form button {
+                font-size: 18px;
             }
         }
     </style>
