@@ -154,12 +154,17 @@
             padding-left: 20px;
             border-left: 3px solid #007bff;
         }
-
+        
         .comment-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1px 0;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          padding: 1px 0;
+        }
+        
+        .comment-item p {
+          width: 100%;
+          margin: 0;
         }
         .comment-item p {
             cursor: pointer;
@@ -293,6 +298,25 @@
           flex-shrink: 1;        
           min-width: 0;          
           max-width: 100%;      
+        }
+        @media screen and (max-width: 800px) {
+          /* Make the entire comment item a block */
+          .comment-item {
+            display: block;
+          }
+          /* The comment text takes its own line */
+          .comment-item p {
+            display: block;
+            margin-bottom: 5px;
+          }
+          /* The date and buttons appear on the next line in a row */
+          .comment-item span,
+          .comment-item .convert-button,
+          .comment-item .delete-button {
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 5px; /* Optional: add spacing between controls */
+          }
         }
 
     </style>
