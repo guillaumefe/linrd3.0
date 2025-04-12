@@ -358,12 +358,6 @@
         document.getElementById('new-task-name').value=formData.name||'';
         document.getElementById('new-task-description').value=formData.description||'';
       }
-      const exportImportCollapsed=localStorage.getItem('exportImportCollapsed');
-      if(exportImportCollapsed==='true'||exportImportCollapsed===null){
-        document.getElementById('export-import').classList.remove('show');
-      }else{
-        document.getElementById('export-import').classList.add('show');
-      }
       initializeWorker();
       startCountdown();
     });
