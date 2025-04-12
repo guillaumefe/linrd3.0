@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/sugar.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/locales/fr.js"></script>
+    <!-- Use the English locale for Sugar.js instead of French -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/locales/en.js"></script>
 
     <style>
         body {
@@ -47,8 +48,8 @@
 
         #tabs {
             display: flex;
-            flex-wrap: wrap; /* Permet aux boutons de passer à la ligne si nécessaire */
-            justify-content: space-between; /* Espace entre les boutons */
+            flex-wrap: wrap; /* Allows buttons to wrap to the next line if needed */
+            justify-content: space-between; /* Spacing between buttons */
             padding: 10px;
             background-color: #007bff;
         }
@@ -64,8 +65,8 @@
             cursor: pointer;
             border-radius: 5px;
             transition: background-color 0.3s, color 0.3s;
-            min-width: 120px; /* Largeur minimale pour les petits écrans */
-            text-align: center; /* Centrer le texte des boutons */
+            min-width: 120px; /* Minimum width for small screens */
+            text-align: center; /* Center the text inside the buttons */
         }
         
         #tabs button.active {
@@ -103,7 +104,7 @@
         }
 
         .task.collapsed .buttons {
-            display: none; /* Masquer les boutons lorsque la tâche est pliée */
+            display: none; /* Hide buttons when the task is collapsed */
         }
 
         .description {
@@ -166,6 +167,7 @@
             flex: 1;
             margin: 0;
             font-size: 14px;
+            font-family: courrier-new;
         }
 
         .comment-item .convert-button,
@@ -261,13 +263,29 @@
         #export-import-toggle:hover {
             opacity: 0.9;
         }
+        
+        .comment_input {
+            width: 100%;
+        }
+        
+        .rationale-item {
+            background-color: #fff3cd; /* Couleur de fond caractéristique */
+            padding: 5px;
+            border-left: 4px solid #ffecb5; /* Petite bande colorée sur la gauche */
+            margin: 5px 0;
+        }
+        
+        .btn-inbox {
+            background-color: #007bff; /* or another color of your choice */
+            color: #fff;
+        }
     </style>
 </head>
 <body>
     <form id="task-form">
-        <input type="text" id="new-task-name" placeholder="Nom de la tâche" required>
+        <input type="text" id="new-task-name" placeholder="Task Name" required>
         <input type="text" id="new-task-description" placeholder="Description">
-        <button type="submit">Ajouter</button>
+        <button type="submit">Add</button>
     </form>
 
     <div id="tabs">
@@ -285,18 +303,17 @@
 
     <div id="export-import">
         <button id="export-import-toggle" onclick="toggleExportImport()">☰</button>
-        <button onclick="exportData()">Exporter les données</button>
-        <button onclick="document.getElementById('import-file').click()">Importer des données</button>
+        <button onclick="exportData()">Export Data</button>
+        <button onclick="document.getElementById('import-file').click()">Import Data</button>
         <input type="file" id="import-file" onchange="importData(event)" style="display:none;">
-        <button onclick="forkApplication()">Forker l'application</button>
-        <button class="btn-reset" onclick="resetInterface()">Réinitialiser</button>
+        <button onclick="forkApplication()">Fork the Application</button>
+        <button class="btn-reset" onclick="resetInterface()">Reset</button>
     </div>
 
     <script>
+        // Check if Sugar.js is loaded
         if (typeof Sugar === 'undefined') {
-            console.error("Sugar.js n'est pas chargé correctement. Veuillez vérifier l'inclusion du script.");
-        } else {
-            //console.log("Sugar.js chargé avec succès :", Sugar);
+            console.error("Sugar.js is not loaded correctly. Please check the script inclusion.");
         }
 
         let tasks = [];
@@ -305,6 +322,7 @@
         let worker;
         let countdownInterval;
 
+        // Load tasks from localStorage on window load
         window.addEventListener('load', function() {
             const savedTasks = localStorage.getItem('tasks');
             if (savedTasks) {
@@ -316,23 +334,27 @@
                     taskIdCounter = maxId + 1;
                     renderTasks();
                 } catch (error) {
-                    console.error("Erreur lors du chargement des tâches :", error);
+                    console.error("Error loading tasks:", error);
                     tasks = [];
                     taskIdCounter = 0;
                 }
             }
+
             const savedForm = localStorage.getItem('taskForm');
             if (savedForm) {
                 const formData = JSON.parse(savedForm);
                 document.getElementById('new-task-name').value = formData.name || '';
                 document.getElementById('new-task-description').value = formData.description || '';
             }
+
             const exportImportCollapsed = localStorage.getItem('exportImportCollapsed');
+            // If exportImportCollapsed is 'true' or null, keep it collapsed by default
             if (exportImportCollapsed === 'true' || exportImportCollapsed === null) {
                 document.getElementById('export-import').classList.add('collapsed');
             } else {
                 document.getElementById('export-import').classList.remove('collapsed');
             }
+
             initializeWorker();
             startCountdown();
         });
@@ -340,6 +362,7 @@
         document.getElementById('new-task-name').addEventListener('input', saveForm);
         document.getElementById('new-task-description').addEventListener('input', saveForm);
 
+        // Save form content to localStorage
         function saveForm() {
             const formData = {
                 name: document.getElementById('new-task-name').value,
@@ -348,6 +371,7 @@
             localStorage.setItem('taskForm', JSON.stringify(formData));
         }
 
+        // Handle new task form submission
         document.getElementById('task-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const name = document.getElementById('new-task-name').value.trim();
@@ -375,6 +399,7 @@
             }
         });
 
+        // Get the maximum "order" for tasks in a specific status
         function getMaxOrder(status) {
             const filtered = tasks.filter(function(task) {
                 return task.status === status;
@@ -394,71 +419,82 @@
         }
 
         function renderTasks() {
-    const taskList = document.getElementById('task-list');
-    taskList.innerHTML = '';
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
 
-    let filteredTasks = tasks.filter(function(task) {
-        return task.status === currentTab;
-    });
+            // Filter tasks by current tab
+            let filteredTasks = tasks.filter(function(task) {
+                return task.status === currentTab;
+            });
 
-    // Pour l'onglet "Inbox", trier par date de création décroissante (les plus récentes en haut)
-    if (currentTab === 'inbox') {
-        filteredTasks.sort(function(a, b) {
-            return new Date(b.createdDate) - new Date(a.createdDate);  // Trier par date de création descendante
-        });
-    } else {
-        // Pour les autres catégories, trier par date de modification décroissante
-        filteredTasks.sort(function(a, b) {
-            return new Date(b.modifiedDate) - new Date(a.modifiedDate);  // Tri par date de modification descendante
-        });
-    }
-
-    filteredTasks.forEach(function(task) {
-        const taskEl = document.createElement('div');
-        taskEl.className = 'task ' + (task.collapsed ? 'collapsed' : '');
-        taskEl.setAttribute('data-task-id', task.id);
-
-        const parentChain = getParentChain(task);
-        const fullTitle = parentChain.length > 0 ? parentChain.join(' > ') + ' > ' + task.name : task.name;
-
-        let timerHtml = '';
-        if (task.status === 'delay' || task.status === 'await') {
-            const remaining = getRemainingTime(task.targetDate);
-            if (remaining > 0) {
-                timerHtml = '<div class="timer" onclick="modifyDeadline(' + task.id + ')"><i class="fas fa-clock"></i> ' + formatTime(remaining) + '</div>';
+            // For "Inbox", sort by creation date descending (most recent on top)
+            if (currentTab === 'inbox') {
+                filteredTasks.sort(function(a, b) {
+                    return new Date(b.createdDate) - new Date(a.createdDate);
+                });
             } else {
-                timerHtml = '<div class="timer" onclick="modifyDeadline(' + task.id + ')"><i class="fas fa-clock"></i> 00:00:00</div>';
+                // For other tabs, sort by modified date descending
+                filteredTasks.sort(function(a, b) {
+                    return new Date(b.modifiedDate) - new Date(a.modifiedDate);
+                });
+            }
+
+            filteredTasks.forEach(function(task) {
+                const taskEl = document.createElement('div');
+                taskEl.className = 'task ' + (task.collapsed ? 'collapsed' : '');
+                taskEl.setAttribute('data-task-id', task.id);
+
+                const parentChain = getParentChain(task);
+                const fullTitle = parentChain.length > 0
+                    ? parentChain.join(' > ') + ' > ' + task.name
+                    : task.name;
+
+                let timerHtml = '';
+                if (task.status === 'delay' || task.status === 'await') {
+                    const remaining = getRemainingTime(task.targetDate);
+                    if (remaining > 0) {
+                        timerHtml = `<div class="timer" onclick="modifyDeadline(${task.id})"><i class="fas fa-clock"></i> ${formatTime(remaining)}</div>`;
+                    } else {
+                        timerHtml = `<div class="timer" onclick="modifyDeadline(${task.id})"><i class="fas fa-clock"></i> 00:00:00</div>`;
+                    }
+                }
+
+                taskEl.innerHTML = 
+                    `<div style="display: flex; align-items: center;">
+                        <i class="fas fa-bars drag-handle"></i>
+                        <h3 style="flex: 1;" onclick="editTaskName(${task.id})">${escapeHTML(fullTitle)}</h3>
+                        <span class="toggle-icon" onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'}</span>
+                    </div>
+                    ${timerHtml}
+                    <pre class="description" onclick="editTaskDescription(${task.id})">${escapeHTML(task.description || 'No description')}</pre>
+                    <div class="buttons">
+                        ${renderActionButton(task, 'done')}
+                        ${renderActionButton(task, 'cancel')}
+                        ${renderActionButton(task, 'delay')}
+                        ${renderActionButton(task, 'await')}
+                        ${renderActionButton(task, 'doc')}
+                        ${renderActionButton(task, 'inbox')}
+                        <button class="btn-delete" onclick="confirmDelete(${task.id})"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                    <div class="comments" id="comments-${task.id}">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <input class="comment_input" type="text" placeholder="Add a comment that could become a subtask if you wish later on"
+                                   oninput="saveCommentInput(${task.id}, this.value)"
+                                   value="${escapeHTML(getSavedCommentInput(task.id))}"
+                                   onkeypress="addComment(event, ${task.id})">
+                            <button onclick="addCommentFromButton(${task.id})">Add</button>
+                        </div>
+                        ${renderComments(task.comments, task.id)}
+                    </div>`;
+
+                taskList.appendChild(taskEl);
+            });
+
+            // Initialize drag-and-drop sorting only for "Inbox"
+            if (currentTab === 'inbox') {
+                initializeSortable();
             }
         }
-
-        taskEl.innerHTML = 
-            '<div style="display: flex; align-items: center;">' +
-                '<i class="fas fa-bars drag-handle"></i>' +
-                '<h3 style="flex: 1;" onclick="editTaskName(' + task.id + ')">' + escapeHTML(fullTitle) + '</h3>' +
-                '<span class="toggle-icon" onclick="toggleTask(' + task.id + ')">' + (task.collapsed ? '▶️' : '▼') + '</span>' +
-            '</div>' +
-            timerHtml +
-            '<pre class="description" onclick="editTaskDescription(' + task.id + ')">' + escapeHTML(task.description || 'Aucune description') + '</pre>' +
-            '<div class="buttons">' +
-                renderActionButton(task, 'done') +
-                renderActionButton(task, 'cancel') +
-                renderActionButton(task, 'delay') +
-                renderActionButton(task, 'await') +
-                renderActionButton(task, 'doc') +
-                '<button class="btn-delete" onclick="confirmDelete(' + task.id + ')"><i class="fas fa-trash"></i> Delete</button>' +
-            '</div>' +
-            '<div class="comments" id="comments-' + task.id + '">' +
-                '<input type="text" placeholder="Ajouter un commentaire" oninput="saveCommentInput(' + task.id + ', this.value)" value="' + escapeHTML(getSavedCommentInput(task.id)) + '" onkeypress="addComment(event, ' + task.id + ')">' +
-                renderComments(task.comments, task.id) +
-            '</div>';
-        taskList.appendChild(taskEl);
-    });
-
-    if (currentTab === 'inbox') {
-        initializeSortable();
-    }
-}
-
 
         function escapeHTML(text) {
             if (!text) return '';
@@ -477,9 +513,17 @@
                 return '';
             }
             if (action === 'inbox') {
-                return '';
+                if (task.status !== 'inbox') {
+                    return `<button class="btn-inbox" onclick="handleAction(${task.id}, 'inbox')">
+                                <i class="fas fa-inbox"></i> Inbox
+                            </button>`;
+                } else {
+                    return '';
+                }
             }
-            return '<button class="btn-' + action + '" onclick="handleAction(' + task.id + ', \'' + action + '\')"><i class="fas fa-' + getIcon(action) + '"></i> ' + capitalize(action) + '</button>';
+            return `<button class="btn-${action}" onclick="handleAction(${task.id}, '${action}')">
+                        <i class="fas fa-${getIcon(action)}"></i> ${capitalize(action)}
+                    </button>`;
         }
 
         function getIcon(action) {
@@ -488,7 +532,8 @@
                 'cancel': 'times',
                 'delay': 'clock',
                 'await': 'hourglass',
-                'doc': 'file-alt'
+                'doc': 'file-alt',
+                'inbox': 'inbox'
             };
             return icons[action] || 'question';
         }
@@ -499,18 +544,28 @@
 
         function renderComments(comments, taskId) {
             if (!comments || comments.length === 0) {
-                return '<p>Aucun commentaire.</p>';
+                return '<p>No comments.</p>';
             }
             const sortedComments = comments.slice().sort(function(a, b) {
-                return b.id - a.id;
+                return b.id - a.id; // Newest comment first
             });
             return sortedComments.map(function(comment) {
-                return '<div class="comment-item">' +
-                           '<p onclick="editComment(' + taskId + ', ' + comment.id + ')">' + escapeHTML(comment.text) + '</p>' +
-                           '<span>' + comment.date + '</span>' +
-                           '<button class="convert-button" onclick="convertCommentToTask(' + taskId + ', ' + comment.id + ')">Convertir en tâche</button>' +
-                           '<button class="delete-button" onclick="deleteComment(' + taskId + ', ' + comment.id + ')">Supprimer</button>' +
-                       '</div>';
+                // If this comment is a 'rationale', render it differently:
+                if (comment.type === 'rationale') {
+                    return `
+                        <div class="comment-item rationale-item">
+                        <p onclick="editComment(${taskId}, ${comment.id})">${escapeHTML(comment.text)}</p>
+                        <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
+                        </div>
+                    `;
+                } else {
+                    return `<div class="comment-item">
+                                <p onclick="editComment(${taskId}, ${comment.id})">${escapeHTML(comment.text)}</p>
+                                <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
+                                <button class="convert-button" onclick="convertCommentToTask(${taskId}, ${comment.id})">Convert to Task</button>
+                                <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Delete</button>
+                            </div>`;
+                }
             }).join('');
         }
 
@@ -529,96 +584,64 @@
             document.querySelectorAll("#tabs button").forEach(function(button) {
                 button.classList.remove("active");
             });
-            const activeButton = document.querySelector('#tabs button[onclick="changeTab(\'' + tab + '\')"]');
+            const activeButton = document.querySelector(`#tabs button[onclick="changeTab('${tab}')"]`);
             if (activeButton) {
                 activeButton.classList.add("active");
             }
             renderTasks();
         }
 
-function handleAction(taskId, actionType) {
-    const task = tasks.find(function(t) {
-        return t.id === taskId;
-    });
-    if (!task) {
-        console.error("Tâche avec ID " + taskId + " non trouvée.");
-        return;
-    }
-
-    // Pour 'delay' et 'await', utiliser modifyDeadline pour gérer la date
-    if (actionType === 'delay' || actionType === 'await') {
-        modifyDeadline(taskId);  // Appel de la fonction existante pour la gestion de la deadline
-
-        // Ajout du commentaire après modification de la deadline
-        const comment = prompt("Veuillez ajouter un commentaire pour \"" + actionType + "\" :");
-        if (comment && comment.trim() !== "") {
-            addCommentToTask(taskId, comment.trim());
-        } else {
-            alert("Le commentaire est obligatoire.");
-            return;  // Sortir si aucun commentaire n'est fourni
-        }
-
-        task.status = actionType;
-        task.order = undefined;  // Réinitialiser l'ordre si la tâche change de statut
-    } 
-
-    // Pour les autres actions (done, cancel, doc)
-    else if (actionType === 'done' || actionType === 'cancel' || actionType === 'doc') {
-        const comment = prompt("Veuillez ajouter un commentaire pour \"" + actionType + "\" (laisser vide pour ignorer) :");
-        if (comment && comment.trim() !== "") {
-            addCommentToTask(taskId, comment.trim());
-        }
-
-        task.status = actionType;
-        task.order = undefined;
-        task.modifiedDate = new Date();  // Mettre à jour la date de modification
-    }
-
-    saveAndRenderTasks();  // Sauvegarder et rendre la tâche
-}
-
-
-        function parsePeriod(input, baseDate) {
-            const regex = /dans\s+les\s+(\d+)\s+prochain(?:es|e)?\s+(semaines|jours|mois)/i;
-            const match = input.match(regex);
-            if (!match) return null;
-
-            const quantity = parseInt(match[1], 10);
-            const unit = match[2].toLowerCase();
-            let endDate = new Date(baseDate);
-
-            switch(unit) {
-                case 'jours':
-                    endDate = Sugar.Date.add(endDate, { days: quantity });
-                    break;
-                case 'semaines':
-                    endDate = Sugar.Date.add(endDate, { weeks: quantity });
-                    break;
-                case 'mois':
-                    endDate = Sugar.Date.add(endDate, { months: quantity });
-                    break;
-                default:
-                    return null;
+        function handleAction(taskId, actionType) {
+            const task = tasks.find(function(t) {
+                return t.id === taskId;
+            });
+            if (!task) {
+                console.error("Task with ID " + taskId + " not found.");
+                return;
             }
 
-            return { start: baseDate, end: endDate };
-        }
+            // For 'delay' and 'await', use modifyDeadline to handle the date
+            if (actionType === 'delay' || actionType === 'await') {
+                modifyDeadline(taskId);
 
-        function getRandomWorkingDay(start, end) {
-            const workingDays = [];
-            let current = new Date(start);
-            while (Sugar.Date.compare(current, end) <= 0) {
-                const day = Sugar.Date.getDay(current);
-                if (day !== 0 && day !== 6) {
-                    workingDays.push(new Date(current));
+                // Add rationale after setting the deadline
+                const rationale = prompt(`Please add a rationale for "${actionType}":`);
+                if (rationale && rationale.trim() !== "") {
+                    addRationaleToTask(taskId, rationale.trim());
+                } else {
+                    alert("A rationale is required.");
+                    return;
                 }
-                current = Sugar.Date.add(current, { days: 1 });
+
+                task.status = actionType;
+                task.order = undefined; // Reset the order if task changes status
             }
-            if (workingDays.length === 0) return null;
-            const randomIndex = Math.floor(Math.random() * workingDays.length);
-            return workingDays[randomIndex];
+            // For other actions (done, cancel, doc)
+            else if (actionType === 'done' || actionType === 'cancel' || actionType === 'doc') {
+                const comment = prompt(`Please add a comment for "${actionType}" (leave empty to skip):`);
+                if (comment && comment.trim() !== "") {
+                    addCommentToTask(taskId, comment.trim());
+                }
+
+                task.status = actionType;
+                task.order = undefined;
+                task.modifiedDate = new Date();
+            }
+            
+            else if (actionType === 'inbox') {
+                if (task.status === 'delay' || task.status === 'await') {
+                    addRationaleToTask(taskId, 'Task put back into the inbox by the user');
+                    task.targetDate = null;  // Remove any waiting delay
+                }
+                task.status = 'inbox';
+                task.order = undefined;     // Consistent with how other status changes reset order
+                task.modifiedDate = new Date();
+            }
+
+            saveAndRenderTasks();
         }
 
+        // Add a comment when Enter is pressed in the comment input
         function addComment(event, taskId) {
             if (event.key === 'Enter') {
                 const commentText = event.target.value.trim();
@@ -636,6 +659,7 @@ function handleAction(taskId, actionType) {
                 return t.id === taskId;
             });
             if (task) {
+                commentText = formatText(commentText);
                 task.comments.push({
                     id: Date.now(),
                     text: commentText,
@@ -650,7 +674,7 @@ function handleAction(taskId, actionType) {
                 return t.id === taskId;
             });
             if (task) {
-                const newName = prompt("Éditer le nom de la tâche :", task.name);
+                const newName = prompt("Edit the task name:", task.name);
                 if (newName !== null && newName.trim() !== "") {
                     task.name = newName.trim();
                     task.modifiedDate = new Date();
@@ -664,7 +688,7 @@ function handleAction(taskId, actionType) {
                 return t.id === taskId;
             });
             if (task) {
-                const newDescription = prompt("Éditer la description de la tâche :", task.description);
+                const newDescription = prompt("Edit the task description:", task.description);
                 if (newDescription !== null) {
                     task.description = newDescription.trim();
                     task.modifiedDate = new Date();
@@ -682,7 +706,7 @@ function handleAction(taskId, actionType) {
                     return c.id === commentId;
                 });
                 if (comment) {
-                    const newText = prompt("Éditer le commentaire :", comment.text);
+                    const newText = prompt("Edit the comment:", comment.text);
                     if (newText !== null && newText.trim() !== "") {
                         comment.text = newText.trim();
                         comment.date = Sugar.Date.format(new Date(), '%d/%m/%Y %H:%M:%S');
@@ -694,12 +718,13 @@ function handleAction(taskId, actionType) {
         }
 
         function confirmDelete(taskId) {
-            if (confirm("Êtes-vous sûr de vouloir supprimer cette tâche ? Toutes ses sous-tâches seront également supprimées.")) {
+            if (confirm("Are you sure you want to delete this task? All its sub-tasks will also be deleted.")) {
                 deleteTask(taskId);
             }
         }
 
         function deleteTask(taskId) {
+            // Recursively delete a task and its sub-tasks
             const deleteRecursively = function(id) {
                 const subTasks = tasks.filter(function(t) {
                     return t.parentId === id;
@@ -724,7 +749,7 @@ function handleAction(taskId, actionType) {
                 return c.id === commentId;
             });
             if (!comment) return;
-            const parentChain = getParentChain(parentTask);
+
             const newTask = {
                 id: taskIdCounter++,
                 name: comment.text,
@@ -739,10 +764,12 @@ function handleAction(taskId, actionType) {
                 order: getMaxOrder('inbox') + 1
             };
             tasks.push(newTask);
+
             parentTask.comments = parentTask.comments.filter(function(c) {
                 return c.id !== commentId;
             });
             parentTask.modifiedDate = new Date();
+
             saveAndRenderTasks();
         }
 
@@ -764,10 +791,18 @@ function handleAction(taskId, actionType) {
         }
 
         function deleteComment(taskId, commentId) {
+            if (!confirm("Are you sure you want to delete this comment?")) {
+                return;
+            }
             const task = tasks.find(function(t) {
                 return t.id === taskId;
             });
             if (task) {
+                const comment = task.comments.find(c => c.id === commentId);
+                if (comment && comment.type === 'rationale') {
+                    alert("You cannot delete a rationale.");
+                    return;
+                }
                 task.comments = task.comments.filter(function(c) {
                     return c.id !== commentId;
                 });
@@ -776,6 +811,7 @@ function handleAction(taskId, actionType) {
             }
         }
 
+        // Save comment input in localStorage
         function saveCommentInput(taskId, value) {
             localStorage.setItem('commentInput-' + taskId, value);
         }
@@ -789,7 +825,7 @@ function handleAction(taskId, actionType) {
         }
 
         function resetInterface() {
-            if (confirm("Êtes-vous sûr de vouloir réinitialiser l'interface ? Toutes les tâches seront supprimées.")) {
+            if (confirm("Are you sure you want to reset the interface? All tasks will be deleted.")) {
                 tasks = [];
                 taskIdCounter = 0;
                 localStorage.removeItem('tasks');
@@ -823,7 +859,9 @@ function handleAction(taskId, actionType) {
                     if (Array.isArray(importedTasks)) {
                         tasks = importedTasks.map(function(task) {
                             return Object.assign({}, task, {
-                                order: task.status === 'inbox' ? (task.order || getMaxOrder('inbox') + 1) : undefined
+                                order: task.status === 'inbox'
+                                    ? (task.order || getMaxOrder('inbox') + 1)
+                                    : undefined
                             });
                         });
                         const maxId = tasks.reduce(function(max, task) {
@@ -831,84 +869,82 @@ function handleAction(taskId, actionType) {
                         }, 0);
                         taskIdCounter = maxId + 1;
                         saveAndRenderTasks();
-                        alert("Importation réussie !");
+                        alert("Data imported successfully!");
                     } else {
-                        alert("Le fichier importé n'est pas valide.");
+                        alert("The imported file is not valid.");
                     }
                 } catch (error) {
-                    alert("Erreur lors de l'importation des données.");
+                    alert("Error importing data.");
                 }
             };
             reader.readAsText(file);
         }
 
-function initializeWorker() {
-    const workerCode = `
-        // Inlined Sugar.js functionality for date handling
-        function createDate(input) {
-            return new Date(input);
-        }
-
-        function isBeforeOrSame(date1, date2) {
-            return date1.getTime() <= date2.getTime();
-        }
-
-        // Worker logic starts here
-        self.onmessage = function(event) {
-            if (event.data.action === 'updateTasks') {
-                const tasks = event.data.tasks;
-                monitorTasks(tasks);
-            }
-        };
-
-        function monitorTasks(tasks) {
-            setInterval(function() {
-                const now = new Date();
-                let updated = false;
-                tasks.forEach(function(task) {
-                    if ((task.status === 'delay' || task.status === 'await') && task.targetDate) {
-                        const targetDate = createDate(task.targetDate);
-                        if (isBeforeOrSame(targetDate, now)) {
-                            task.status = 'inbox';
-                            task.modifiedDate = new Date();
-                            task.order = getMaxOrder(tasks, 'inbox') + 1;
-                            task.targetDate = null;
-                            updated = true;
-                        }
-                    }
-                });
-                if (updated) {
-                    postMessage({ action: 'refreshTasks', tasks: tasks });
+        function initializeWorker() {
+            const workerCode = `
+                // Inlined Sugar.js functionality for date handling
+                function createDate(input) {
+                    return new Date(input);
                 }
-            }, 1000);
+
+                function isBeforeOrSame(date1, date2) {
+                    return date1.getTime() <= date2.getTime();
+                }
+
+                // Worker logic starts here
+                self.onmessage = function(event) {
+                    if (event.data.action === 'updateTasks') {
+                        const tasks = event.data.tasks;
+                        monitorTasks(tasks);
+                    }
+                };
+
+                function monitorTasks(tasks) {
+                    setInterval(function() {
+                        const now = new Date();
+                        let updated = false;
+                        tasks.forEach(function(task) {
+                            if ((task.status === 'delay' || task.status === 'await') && task.targetDate) {
+                                const targetDate = createDate(task.targetDate);
+                                if (isBeforeOrSame(targetDate, now)) {
+                                    task.status = 'inbox';
+                                    task.modifiedDate = new Date();
+                                    task.order = getMaxOrder(tasks, 'inbox') + 1;
+                                    task.targetDate = null;
+                                    updated = true;
+                                }
+                            }
+                        });
+                        if (updated) {
+                            postMessage({ action: 'refreshTasks', tasks: tasks });
+                        }
+                    }, 1000);
+                }
+
+                function getMaxOrder(tasks, status) {
+                    const filtered = tasks.filter(function(task) {
+                        return task.status === status;
+                    });
+                    if (filtered.length === 0) return 0;
+                    return Math.max.apply(null, filtered.map(function(task) {
+                        return task.order || 0;
+                    }));
+                }
+            `;
+
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const workerURL = URL.createObjectURL(blob);
+            worker = new Worker(workerURL);
+
+            worker.onmessage = function(event) {
+                if (event.data.action === 'refreshTasks') {
+                    tasks = event.data.tasks;
+                    saveAndRenderTasks();
+                }
+            };
+
+            worker.postMessage({ action: 'updateTasks', tasks: tasks });
         }
-
-        function getMaxOrder(tasks, status) {
-            const filtered = tasks.filter(function(task) {
-                return task.status === status;
-            });
-            if (filtered.length === 0) return 0;
-            return Math.max.apply(null, filtered.map(function(task) {
-                return task.order || 0;
-            }));
-        }
-    `;
-
-    const blob = new Blob([workerCode], { type: 'application/javascript' });
-    const workerURL = URL.createObjectURL(blob);
-    worker = new Worker(workerURL);
-
-    worker.onmessage = function(event) {
-        if (event.data.action === 'refreshTasks') {
-            tasks = event.data.tasks;
-            saveAndRenderTasks();
-        }
-    };
-
-    worker.postMessage({ action: 'updateTasks', tasks: tasks });
-}
-
-
 
         function initializeSortable() {
             const taskList = document.getElementById('task-list');
@@ -983,7 +1019,7 @@ function initializeWorker() {
             let parts = [];
 
             if (days > 0) {
-                parts.push(days + 'j');
+                parts.push(days + 'd');
                 if (hours > 0) parts.push(hours + 'h');
             } else if (hours > 0) {
                 parts.push(hours + 'h');
@@ -998,98 +1034,136 @@ function initializeWorker() {
             return parts.join(' ');
         }
 
-// Custom date expression parser
-// Activer la locale française
-Sugar.Date.setLocale('fr');
+        // Set the locale to English for Sugar.js date parsing
+        Sugar.Date.setLocale('en');
 
-// Fonction générique pour parser les dates
-function parseDateExpression(input, baseDate) {
-    input = input.toLowerCase().trim();
-    const now = baseDate || new Date();  // Utilise la date actuelle ou la date de base fournie
+        // Function to parse custom date expressions in English
+        function parseDateExpression(input, baseDate) {
+            input = input.toLowerCase().trim();
+            const now = baseDate || new Date();
 
-    // Gérer les cas de "demain" ou "tomorrow"
-    if (input === "demain" || input === "tomorrow") {
-        return Sugar.Date.advance(now, { days: 1 });
-    } else if (input === "après-demain" || input === "day after tomorrow" || input === "apres demain" || input === "après demain") {
-        return Sugar.Date.advance(now, { days: 2 });
-    }
+            // Handle quick keywords like "tomorrow"
+            if (input === "tomorrow") {
+                return Sugar.Date.advance(now, { days: 1 });
+            } else if (
+                input === "day after tomorrow"
+            ) {
+                return Sugar.Date.advance(now, { days: 2 });
+            }
 
-    // Gérer les expressions relatives comme "dans 3 heures", "dans 2 minutes"
-    const matchRelativeTime = input.match(/dans\s+(\d+)\s+(minutes?|heures?|jours?|secondes?)/);
-    if (matchRelativeTime) {
-        const value = parseInt(matchRelativeTime[1], 10);
-        const unit = matchRelativeTime[2];
+            // Handle expressions like "in 3 hours", "in 2 minutes"
+            const matchRelativeTime = input.match(/in\\s+(\\d+)\\s+(minutes?|hours?|days?|seconds?)/);
+            if (matchRelativeTime) {
+                const value = parseInt(matchRelativeTime[1], 10);
+                const unit = matchRelativeTime[2];
 
-        let futureDate;
-        switch (unit) {
-            case 'minute':
-            case 'minutes':
-                futureDate = Sugar.Date.advance(now, { minutes: value });
-                break;
-            case 'heure':
-            case 'heures':
-                futureDate = Sugar.Date.advance(now, { hours: value });
-                break;
-            case 'jour':
-            case 'jours':
-                futureDate = Sugar.Date.advance(now, { days: value });
-                break;
-            case 'seconde':
-            case 'secondes':
-                futureDate = Sugar.Date.advance(now, { seconds: value });
-                break;
+                let futureDate;
+                switch (unit) {
+                    case 'minute':
+                    case 'minutes':
+                        futureDate = Sugar.Date.advance(now, { minutes: value });
+                        break;
+                    case 'hour':
+                    case 'hours':
+                        futureDate = Sugar.Date.advance(now, { hours: value });
+                        break;
+                    case 'day':
+                    case 'days':
+                        futureDate = Sugar.Date.advance(now, { days: value });
+                        break;
+                    case 'second':
+                    case 'seconds':
+                        futureDate = Sugar.Date.advance(now, { seconds: value });
+                        break;
+                }
+
+                if (Sugar.Date.isValid(futureDate) && Sugar.Date.isFuture(futureDate)) {
+                    return futureDate;
+                }
+                return null;
+            }
+
+            // Try parsing standard expressions like "next Monday"
+            const parsedDate = Sugar.Date.create(input, { from: now });
+
+            if (Sugar.Date.isValid(parsedDate) && Sugar.Date.isFuture(parsedDate)) {
+                return parsedDate;
+            }
+
+            return null;
         }
 
-        // Retourner la date future validée
-        if (Sugar.Date.isValid(futureDate) && Sugar.Date.isFuture(futureDate)) {
-            return futureDate;
+        // Function to modify a task's deadline (e.g. in "delay" or "await")
+        function modifyDeadline(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
+            let newTargetDate = null;
+
+            while (true) {
+                const dateInput = prompt(`Set a new deadline for "${task.name}" (e.g. tomorrow, next Monday, in 3 hours):`);
+                if (dateInput === null) return;
+
+                const parsedDate = parseDateExpression(dateInput, baseDate);
+                
+                if (parsedDate) {
+                    newTargetDate = parsedDate;
+                    task.targetDate = newTargetDate;
+                    task.modifiedDate = new Date();
+                    break;
+                } else {
+                    alert("Please provide a valid future date.");
+                }
+            }
+
+            saveAndRenderTasks();
         }
-        return null;
-    }
 
-    // Tenter de parser des expressions standards comme "lundi prochain"
-    const parsedDate = Sugar.Date.create(input, { from: now });
-    
-    // Vérification étape par étape pour mieux comprendre ce qui échoue
-    // console.log("Parsed Date:", parsedDate);
-    // console.log("Is Valid:", Sugar.Date.isValid(parsedDate));
-    // console.log("Is Future:", Sugar.Date.isFuture(parsedDate));
-
-    if (Sugar.Date.isValid(parsedDate) && Sugar.Date.isFuture(parsedDate)) {
-        return parsedDate;
-    }
-
-    return null;  // Retourner null si la date n'est pas valide
-}
-
-// Fonction pour modifier la deadline d'une tâche (dans delay/await ou tout autre onglet)
-function modifyDeadline(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-
-    const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
-    let newTargetDate = null;
-
-    while (true) {
-        const dateInput = prompt(`Modifier la deadline pour "${task.name}". Veuillez fournir une nouvelle date (ex : demain, lundi prochain, dans 3 heures) :`);
-        if (dateInput === null) return;
-
-        const parsedDate = parseDateExpression(dateInput, baseDate);  // Appeler la fonction pour parser l'entrée utilisateur
+        // Provide a stub for the "forkApplication" button (if needed)
+        function forkApplication() {
+            alert("Fork functionality is not implemented in this version.");
+        }
         
-        if (parsedDate) {
-            newTargetDate = parsedDate;
-            task.targetDate = newTargetDate;
-            task.modifiedDate = new Date();  // Mettre à jour la date modifiée
-            break;
-        } else {
-            alert("Veuillez fournir une date valide et future.");
+        function addCommentFromButton(taskId) {
+            // On récupère la zone de saisie
+            const inputEl = document.getElementById('comment-input-' + taskId);
+            if (!inputEl) return;
+        
+            const commentText = inputEl.value.trim();
+            if (commentText) {
+                // Même logique que lorsqu'on appuie sur Enter
+                addCommentToTask(taskId, commentText);
+                inputEl.value = '';
+                removeSavedCommentInput(taskId); 
+                saveAndRenderTasks();
+            }
         }
-    }
+        
+        function addRationaleToTask(taskId, rationaleText) {
+           const task = tasks.find(t => t.id === taskId);
+           if (task) {
+               rationaleText = formatText(rationaleText);
+               task.comments.push({
+                   id: Date.now(),
+                   text: rationaleText,
+                   date: Sugar.Date.format(new Date(), '%d/%m/%Y %H:%M:%S'),
+                   type: 'rationale'
+               });
+               task.modifiedDate = new Date();
+           }
+        }
 
-    saveAndRenderTasks();  // Sauvegarder et rendre la nouvelle tâche
-}
-
-
+        function formatText(text) {
+            text = text.trim(); 
+            if (text.length > 0) {
+                text = text.charAt(0).toUpperCase() + text.slice(1);
+                if (!text.endsWith('.')) {
+                    text += '.';
+                }
+            }
+            return text;
+        }
 
     </script>
 </body>
