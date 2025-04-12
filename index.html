@@ -602,22 +602,45 @@
                 return;
             }
 
-            // For 'delay' and 'await', use modifyDeadline to handle the date
-            if (actionType === 'delay' || actionType === 'await') {
-                modifyDeadline(taskId);
-
-                // Add rationale after setting the deadline
-                const rationale = prompt(`Please add a rationale for "${actionType}":`);
+            if (actionType === 'delay') {
+                // Must choose a valid deadline
+                const success = modifyDeadline(taskId, true);  // Pass "true" for mandatory
+                if (!success) {
+                    // If user canceled or gave no valid date, do not proceed
+                    return;
+                }
+                // Add rationale
+                const rationale = prompt(`Please add a rationale for "delay":`);
                 if (rationale && rationale.trim() !== "") {
                     addRationaleToTask(taskId, rationale.trim());
                 } else {
                     alert("A rationale is required.");
-                    return;
+                    return; 
                 }
-
-                task.status = actionType;
-                task.order = undefined; // Reset the order if task changes status
+                task.status = 'delay';
+                task.order = undefined;
+                task.modifiedDate = new Date();
             }
+            
+            else if (actionType === 'await') {
+                // Optional deadline
+                modifyDeadline(taskId, false);  // Pass "false" for optional
+                // Add rationale
+                let rationale = prompt(`Add a rationale for "await" (optional). Leave blank or click Cancel to skip:`);
+                
+                if (!rationale || rationale.trim() === "") {
+                    rationale = "Task awaited by user.";
+                }
+                
+                if (rationale && rationale.trim() !== "") {
+                    addRationaleToTask(taskId, rationale.trim());
+                }
+                task.status = 'await';
+                task.order = undefined;
+                task.modifiedDate = new Date();
+            }
+
+
             // For other actions (done, cancel, doc)
             else if (actionType === 'done' || actionType === 'cancel' || actionType === 'doc') {
                 const comment = prompt(`Please add a comment for "${actionType}" (leave empty to skip):`);
@@ -632,7 +655,7 @@
             
             else if (actionType === 'inbox') {
                 if (task.status === 'delay' || task.status === 'await') {
-                    addRationaleToTask(taskId, 'Task put back into the inbox by the user');
+                    addRationaleToTask(taskId, 'Task put back into the inbox by user');
                     task.targetDate = null;  // Remove any waiting delay
                 }
                 task.status = 'inbox';
@@ -988,7 +1011,7 @@
 
         function updateCountdowns() {
             tasks.forEach(function(task) {
-                if (task.status === 'delay' || task.status === 'await') {
+                if (task.status === 'delay') {
                     const remaining = getRemainingTime(task.targetDate);
                     const taskEl = document.querySelector('[data-task-id="' + task.id + '"]');
                     if (taskEl) {
@@ -998,6 +1021,31 @@
                                 timerEl.innerHTML = '<i class="fas fa-clock"></i> ' + formatTime(remaining);
                             } else {
                                 timerEl.innerHTML = '<i class="fas fa-clock"></i> 00:00:00';
+                            }
+                        }
+                    }
+                }
+                else if (task.status === 'await') {
+                    // If there's no targetDate, do not display the timer
+                    if (!task.targetDate) {
+                        const taskEl = document.querySelector('[data-task-id="' + task.id + '"]');
+                        if (taskEl) {
+                            const timerEl = taskEl.querySelector('.timer');
+                            if (timerEl) {
+                                timerEl.innerHTML = "";
+                            }
+                        }
+                    } else {
+                        const remaining = getRemainingTime(task.targetDate);
+                        const taskEl = document.querySelector('[data-task-id="' + task.id + '"]');
+                        if (taskEl) {
+                            const timerEl = taskEl.querySelector('.timer');
+                            if (timerEl) {
+                                if (remaining > 0) {
+                                    timerEl.innerHTML = '<i class="fas fa-clock"></i> ' + formatTime(remaining);
+                                } else {
+                                    timerEl.innerHTML = '<i class="fas fa-clock"></i> 00:00:00';
+                                }
                             }
                         }
                     }
@@ -1096,30 +1144,56 @@
         }
 
         // Function to modify a task's deadline (e.g. in "delay" or "await")
-        function modifyDeadline(taskId) {
+        function modifyDeadline(taskId, isMandatory) {
             const task = tasks.find(t => t.id === taskId);
-            if (!task) return;
-
+            if (!task) return false;
+        
             const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
             let newTargetDate = null;
-
-            while (true) {
-                const dateInput = prompt(`Set a new deadline for "${task.name}" (e.g. tomorrow, next Monday, in 3 hours):`);
-                if (dateInput === null) return;
-
-                const parsedDate = parseDateExpression(dateInput, baseDate);
-                
-                if (parsedDate) {
-                    newTargetDate = parsedDate;
-                    task.targetDate = newTargetDate;
-                    task.modifiedDate = new Date();
-                    break;
+        
+            if (isMandatory) {
+                // Must choose a valid date, or cancel leads to no change
+                while (true) {
+                    const dateInput = prompt(
+                      `Set a new deadline for "${task.name}" (e.g. tomorrow, next Monday, in 3 hours):`
+                    );
+                    if (dateInput === null) {
+                        // User canceled => do not set status, return false
+                        return false;
+                    }
+                    const parsedDate = parseDateExpression(dateInput, baseDate);
+                    if (parsedDate) {
+                        newTargetDate = parsedDate;
+                        task.targetDate = newTargetDate;
+                        task.modifiedDate = new Date();
+                        break;
+                    } else {
+                        alert("Please provide a valid future date.");
+                    }
+                }
+            } else {
+                // Optional deadline
+                const dateInput = prompt(
+                  `Set a new deadline for "${task.name}" (optional). Leave blank or click Cancel to skip:`
+                );
+                if (dateInput === null || dateInput.trim() === "") {
+                    // No date => skip
+                    task.targetDate = null;
                 } else {
-                    alert("Please provide a valid future date.");
+                    const parsedDate = parseDateExpression(dateInput, baseDate);
+                    if (parsedDate) {
+                        newTargetDate = parsedDate;
+                        task.targetDate = newTargetDate;
+                        task.modifiedDate = new Date();
+                    } else {
+                        alert("Invalid date. No deadline will be set.");
+                        task.targetDate = null;
+                    }
                 }
             }
-
+        
             saveAndRenderTasks();
+            return true;
         }
 
         // Provide a stub for the "forkApplication" button (if needed)
