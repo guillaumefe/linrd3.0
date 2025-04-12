@@ -161,7 +161,6 @@
             align-items: center;
             padding: 1px 0;
         }
-
         .comment-item p {
             cursor: pointer;
             flex: 1;
@@ -271,9 +270,9 @@
         }
         
         .rationale-item {
-            background-color: #fff3cd; /* Couleur de fond caractéristique */
+            background-color: #fff3cd;
             padding: 5px;
-            border-left: 4px solid #ffecb5; /* Petite bande colorée sur la gauche */
+            border-left: 4px solid #ffecb5; 
             margin: 5px 0;
         }
         
@@ -286,6 +285,16 @@
             background-color: #FFD700; /* Gold color */
             color: #000;              /* Black text */
         }
+        
+        .task h3, p {
+          word-wrap: break-word; 
+          overflow-wrap: break-word;
+          white-space: pre-wrap;  
+          flex-shrink: 1;        
+          min-width: 0;          
+          max-width: 100%;      
+        }
+
     </style>
 </head>
 <body>
@@ -471,11 +480,11 @@
                 taskEl.innerHTML = 
                     `<div style="display: flex; align-items: center;">
                         <i class="fas fa-bars drag-handle"></i>
-                        <h3 style="flex: 1;" onclick="editTaskName(${task.id})">${renderTextWithLinks(fullTitle)}</h3>
+                        <h3 style="flex: 1;" onclick="editTaskName(event, ${task.id})">${renderTextWithLinks(fullTitle)}</h3>
                         <span class="toggle-icon" onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'}</span>
                     </div>
                     ${timerHtml}
-                    <pre class="description" onclick="editTaskDescription(${task.id})">${renderTextWithLinks(task.description || 'No description')}</pre>
+                    <pre class="description" onclick="editTaskDescription(event, ${task.id})">${renderTextWithLinks(task.description || 'No description')}</pre>
                     <div class="buttons">
                         ${renderActionButton(task, 'done')}
                         ${renderActionButton(task, 'cancel')}
@@ -553,13 +562,13 @@
                 if (comment.type === 'rationale') {
                     return `
                         <div class="comment-item rationale-item">
-                        <p onclick="editComment(${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
+                        <p onclick="editComment(event, ${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
                         <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
                         </div>
                     `;
                 } else {
                     return `<div class="comment-item">
-                                <p onclick="editComment(${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
+                                <p onclick="editComment(event, ${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
                                 <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
                                 <button class="convert-button" onclick="convertCommentToTask(${taskId}, ${comment.id})">Convert to Task</button>
                                 <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Delete</button>
@@ -701,7 +710,11 @@
             }
         }
 
-        function editTaskName(taskId) {
+        function editTaskName(e, taskId) {
+            // If the user clicked on an <a> link, let it open in a new tab and DO NOT edit.
+            if (e.target.tagName.toLowerCase() === 'a') {
+              return; 
+            }
             const task = tasks.find(function(t) {
                 return t.id === taskId;
             });
@@ -715,7 +728,11 @@
             }
         }
 
-        function editTaskDescription(taskId) {
+        function editTaskDescription(e, taskId) {
+            // If the user clicked a link, skip editing
+            if (e.target.tagName.toLowerCase() === 'a') {
+              return;
+            }
             const task = tasks.find(function(t) {
                 return t.id === taskId;
             });
@@ -729,7 +746,11 @@
             }
         }
 
-        function editComment(taskId, commentId) {
+        function editComment(e, taskId, commentId) {
+            if (e.target.tagName.toLowerCase() === 'a') {
+              // The user clicked an actual link, so let the link open and do NOT edit.
+              return;
+            }
             const task = tasks.find(function(t) {
                 return t.id === taskId;
             });
@@ -1269,14 +1290,10 @@
         
           // Step B: turn URLs into clickable links
           // Matches: http:// or https:// or www.  + "anything non-whitespace"
-          const urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
+          const urlRegex = /((https?:\/\/|www\.)[^\s]+)/gi;
         
           const linked = escaped.replace(urlRegex, function (url) {
-            // Prepend http:// if it starts with "www." only:
             let href = url;
-            if (!href.match(/^https?:\/\//)) {
-              href = "http://" + href;
-            }
             return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
           });
         
