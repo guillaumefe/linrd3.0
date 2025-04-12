@@ -332,6 +332,15 @@
     <button onclick="changeTab('doc')">Doc</button>
     <button onclick="changeTab('someday')">Someday</button>
   </div>
+  <div id="search-container" style="background-color: #f4f4f9;display:flex;margin-top:0.2%;">
+    <input
+        type="text"
+        id="search-input"
+        placeholder="Search tasks..."
+        oninput="performSearch()"
+        style="font-size: 16px;flex: 0 0 97.5%;padding:1%;"
+    >
+  </div>
   <div id="visualization">
     <div class="task-list" id="task-list"></div>
   </div>
@@ -504,7 +513,13 @@
       document.querySelectorAll("#tabs button").forEach(function(button){button.classList.remove("active");});
       const activeButton=document.querySelector(`#tabs button[onclick="changeTab('${tab}')"]`);
       if(activeButton){activeButton.classList.add("active");}
-      renderTasks();
+      // If the search field is non-empty, perform search instead of re-rendering normal tasks.
+      const searchQuery = document.getElementById('search-input').value.trim();
+      if(searchQuery !== ""){
+        performSearch();
+      } else {
+        renderTasks();
+      }
     }
     function handleAction(taskId,actionType){
       const task=tasks.find(function(t){return t.id===taskId;});
@@ -870,6 +885,156 @@
         exportImport.classList.remove('show');
       }
     });
+
+// Function to perform a search within the current tab's tasks
+function performSearch() {
+  const query = document.getElementById('search-input').value.trim().toLowerCase();
+  // If no search text, restore the default counts and render the normal tasks.
+  if (!query) {
+    updateTabCounts();
+    renderTasks();
+    return;
+  }
+  
+  // Update all tabs with search-filtered counts.
+  updateAllTabsForSearch();
+
+  // Split the query into individual terms.
+  const terms = query.split(/\s+/);
+  // Filter only tasks in the current tab.
+  const currentTasks = tasks.filter(task => task.status === currentTab);
+
+  const results = currentTasks.filter(task => {
+    const parentChainText = getParentChain(task).join(' ');
+    const combinedText = (
+      parentChainText + ' ' +
+      task.name + ' ' +
+      (task.description || '') + ' ' +
+      task.comments.map(c => c.text).join(' ')
+    ).toLowerCase();
+    return terms.some(term => combinedText.includes(term));
+  }).map(task => {
+    const parentChainText = getParentChain(task).join(' ');
+    const combinedText = (
+      parentChainText + ' ' +
+      task.name + ' ' +
+      (task.description || '') + ' ' +
+      task.comments.map(c => c.text).join(' ')
+    ).toLowerCase();
+
+    // Basic score: count number of matches for each term.
+    let score = 0;
+    terms.forEach(term => {
+      const regex = new RegExp(term, 'g');
+      score += (combinedText.match(regex) || []).length;
+    });
+
+    // Ordered occurrence bonus: add a high bonus if the terms appear in the same order as typed.
+    const orderedRegex = new RegExp(terms.map(escapeRegex).join(".*?"), "i");
+    if (orderedRegex.test(combinedText)) {
+      score += 1000;
+    }
+    task.relevance = score;
+    return task;
+  });
+
+  // Sort results by descending relevance.
+  results.sort((a, b) => b.relevance - a.relevance);
+  renderSearchResults(results);
+}
+
+
+
+
+// Function to render the search results in the task list container.
+function renderSearchResults(results) {
+  const taskList = document.getElementById('task-list');
+  taskList.innerHTML = '';
+  results.forEach(function(task) {
+    const taskEl = document.createElement('div');
+    taskEl.className = 'task ' + (task.collapsed ? 'collapsed' : '');
+    taskEl.setAttribute('data-task-id', task.id);
+    const parentChain = getParentChain(task);
+    const fullTitle = parentChain.length > 0 
+      ? parentChain.join(' > ') + ' > ' + task.name 
+      : task.name;
+    let timerHtml = '';
+    if (task.status === 'delay' || task.status === 'await') {
+      const remaining = getRemainingTime(task.targetDate);
+      timerHtml = `<div class="timer" onclick="modifyDeadline(${task.id})">
+          <i class="fas fa-clock"></i> ${remaining > 0 ? formatTime(remaining) : '00:00:00'}
+        </div>`;
+    }
+    taskEl.innerHTML = `<div style="display: flex; align-items: center;">
+          <i class="fas fa-bars drag-handle"></i>
+          <h3 style="flex: 1;" onclick="editTaskName(event, ${task.id})">
+            ${renderTextWithLinks(fullTitle)}
+          </h3>
+          <span class="toggle-icon" onclick="toggleTask(${task.id})">
+            ${task.collapsed ? '▶️' : '▼'}
+          </span>
+        </div>
+        ${timerHtml}
+        <pre class="description" onclick="editTaskDescription(event, ${task.id})">
+          ${renderTextWithLinks(task.description || 'No description')}
+        </pre>
+        <div class="buttons">
+          ${renderActionButton(task, 'done')}
+          ${renderActionButton(task, 'cancel')}
+          ${renderActionButton(task, 'delay')}
+          ${renderActionButton(task, 'await')}
+          ${renderActionButton(task, 'doc')}
+          ${renderActionButton(task, 'inbox')}
+          ${renderActionButton(task, 'someday')}
+          <button class="btn-delete" onclick="confirmDelete(${task.id})">
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </div>
+        <div class="comments" id="comments-${task.id}">
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <textarea id="comment-input-${task.id}" class="comment_input" type="text" placeholder="Add a comment that could become a subtask if you wish later on" oninput="saveCommentInput(${task.id}, this.value)" value="${renderTextWithLinks(getSavedCommentInput(task.id))}"></textarea>
+            <button onclick="addCommentFromButton(${task.id})">Add</button>
+          </div>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">
+          ${renderComments(task.comments, task.id)}
+        </div>`;
+    taskList.appendChild(taskEl);
+  });
+}
+
+// Helper function to escape special regex characters in a term.
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Temporarily update tab's badge with the number of filtered tasks.
+function updateAllTabsForSearch() {
+  const query = document.getElementById('search-input').value.trim().toLowerCase();
+  const terms = query.split(/\s+/);
+  // List all statuses (each tab)
+  const statuses = ['inbox', 'done', 'cancel', 'delay', 'await', 'doc', 'someday'];
+  statuses.forEach(status => {
+    // For each tab, filter tasks that belong to that status and match at least one search term.
+    const count = tasks.filter(task => {
+      if (task.status !== status) return false;
+      const parentChainText = getParentChain(task).join(' ');
+      const combinedText = (
+        parentChainText + ' ' +
+        task.name + ' ' +
+        (task.description || '') + ' ' +
+        task.comments.map(c => c.text).join(' ')
+      ).toLowerCase();
+      return terms.some(term => combinedText.includes(term));
+    }).length;
+    const countEl = document.getElementById('count-' + status);
+    if (countEl) {
+      countEl.textContent = count;
+    }
+  });
+}
+
+
+
   </script>
 </body>
 </html>
