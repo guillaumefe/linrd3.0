@@ -471,11 +471,11 @@
                 taskEl.innerHTML = 
                     `<div style="display: flex; align-items: center;">
                         <i class="fas fa-bars drag-handle"></i>
-                        <h3 style="flex: 1;" onclick="editTaskName(${task.id})">${escapeHTML(fullTitle)}</h3>
+                        <h3 style="flex: 1;" onclick="editTaskName(${task.id})">${renderTextWithLinks(fullTitle)}</h3>
                         <span class="toggle-icon" onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'}</span>
                     </div>
                     ${timerHtml}
-                    <pre class="description" onclick="editTaskDescription(${task.id})">${escapeHTML(task.description || 'No description')}</pre>
+                    <pre class="description" onclick="editTaskDescription(${task.id})">${renderTextWithLinks(task.description || 'No description')}</pre>
                     <div class="buttons">
                         ${renderActionButton(task, 'done')}
                         ${renderActionButton(task, 'cancel')}
@@ -490,7 +490,7 @@
                         <div style="display: flex; align-items: center; gap: 5px;">
                             <textarea id="comment-input-${task.id}" class="comment_input" type="text" placeholder="Add a comment that could become a subtask if you wish later on"
                                    oninput="saveCommentInput(${task.id}, this.value)"
-                                   value="${escapeHTML(getSavedCommentInput(task.id))}"></textarea>
+                                   value="${renderTextWithLinks(getSavedCommentInput(task.id))}"></textarea>
                             <button onclick="addCommentFromButton(${task.id})">Add</button>
                         </div>
                         <hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">
@@ -504,18 +504,6 @@
             if (currentTab === 'inbox') {
                 initializeSortable();
             }
-        }
-
-        function escapeHTML(text) {
-            if (!text) return '';
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
 
         function renderActionButton(task, action) {
@@ -565,13 +553,13 @@
                 if (comment.type === 'rationale') {
                     return `
                         <div class="comment-item rationale-item">
-                        <p onclick="editComment(${taskId}, ${comment.id})">${escapeHTML(comment.text)}</p>
+                        <p onclick="editComment(${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
                         <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
                         </div>
                     `;
                 } else {
                     return `<div class="comment-item">
-                                <p onclick="editComment(${taskId}, ${comment.id})">${escapeHTML(comment.text)}</p>
+                                <p onclick="editComment(${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
                                 <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
                                 <button class="convert-button" onclick="convertCommentToTask(${taskId}, ${comment.id})">Convert to Task</button>
                                 <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Delete</button>
@@ -1266,6 +1254,33 @@
                 const countEl = document.getElementById('count-' + status);
                 if (countEl) countEl.textContent = count;
             });
+        }
+        
+        function renderTextWithLinks(text) {
+          if (!text) return "";
+          
+          // Step A: escape text (to avoid malicious scripts, etc.)
+          const escaped = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        
+          // Step B: turn URLs into clickable links
+          // Matches: http:// or https:// or www.  + "anything non-whitespace"
+          const urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
+        
+          const linked = escaped.replace(urlRegex, function (url) {
+            // Prepend http:// if it starts with "www." only:
+            let href = url;
+            if (!href.match(/^https?:\/\//)) {
+              href = "http://" + href;
+            }
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+          });
+        
+          return linked;
         }
     </script>
 </body>
