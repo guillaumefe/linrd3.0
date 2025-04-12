@@ -343,6 +343,14 @@
     let worker;
     let countdownInterval;
     window.addEventListener('load',function(){
+      // Restore the saved current tab from localStorage
+      const savedTab = localStorage.getItem('currentTab');
+      if (savedTab) {
+        currentTab = savedTab;
+      } else {
+        currentTab = 'inbox';
+      }
+      changeTab(currentTab);  // Update the UI to use the stored tab
       const savedTasks=localStorage.getItem('tasks');
       if(savedTasks){
         try{
@@ -492,6 +500,7 @@
     }
     function changeTab(tab){
       currentTab=tab;
+      localStorage.setItem('currentTab', tab);  // Save current tab selection
       document.querySelectorAll("#tabs button").forEach(function(button){button.classList.remove("active");});
       const activeButton=document.querySelector(`#tabs button[onclick="changeTab('${tab}')"]`);
       if(activeButton){activeButton.classList.add("active");}
