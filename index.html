@@ -281,6 +281,11 @@
             background-color: #007bff; /* or another color of your choice */
             color: #fff;
         }
+        
+        .btn-someday {
+            background-color: #FFD700; /* Gold color */
+            color: #000;              /* Black text */
+        }
     </style>
 </head>
 <body>
@@ -297,6 +302,7 @@
         <button onclick="changeTab('delay')">Delay (<span class="badge" id="count-delay">0</span>)</button>
         <button onclick="changeTab('await')">Await (<span class="badge" id="count-await">0</span>)</button>
         <button onclick="changeTab('doc')">Doc</button>
+        <button onclick="changeTab('someday')">Someday</button>
     </div>
 
     <div id="visualization">
@@ -477,6 +483,7 @@
                         ${renderActionButton(task, 'await')}
                         ${renderActionButton(task, 'doc')}
                         ${renderActionButton(task, 'inbox')}
+                        ${renderActionButton(task, 'someday')} 
                         <button class="btn-delete" onclick="confirmDelete(${task.id})"><i class="fas fa-trash"></i> Delete</button>
                     </div>
                     <div class="comments" id="comments-${task.id}">
@@ -536,7 +543,8 @@
                 'delay': 'clock',
                 'await': 'hourglass',
                 'doc': 'file-alt',
-                'inbox': 'inbox'
+                'inbox': 'inbox',
+                'someday': 'lightbulb'
             };
             return icons[action] || 'question';
         }
@@ -651,6 +659,16 @@
 
                 task.status = actionType;
                 task.order = undefined;
+                task.modifiedDate = new Date();
+            }
+            
+            else if (actionType === 'someday') {
+                const agree = confirm(`This action is going to be sidelined, do you agree?`);
+                if (! agree) {
+                    return;
+                }
+                task.status = 'someday';
+                task.order = undefined; // We want to reset the order if needed
                 task.modifiedDate = new Date();
             }
             
