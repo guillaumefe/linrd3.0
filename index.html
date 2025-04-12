@@ -1,1328 +1,872 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linrd</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/sugar.min.js"></script>
-    <!-- Use the English locale for Sugar.js instead of French -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/locales/en.js"></script>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f9;
-        }
-
-        #task-form {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding: 15px;
-            background: #007bff;
-            color: #fff;
-        }
-
-        #task-form input {
-            padding: 10px;
-            font-size: 18px;
-            border-radius: 3px;
-            border: 1px solid #ccc;
-        }
-
-        #task-form button {
-            padding: 10px;
-            font-size: 18px;
-            background: #28a745;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 3px;
-        }
-
-        #tabs {
-            display: flex;
-            flex-wrap: wrap; /* Allows buttons to wrap to the next line if needed */
-            justify-content: space-between; /* Spacing between buttons */
-            padding: 10px;
-            background-color: #007bff;
-        }
-        
-        #tabs button {
-            flex: 1;
-            margin: 5px;
-            padding: 10px;
-            font-size: 18px;
-            background: #fff;
-            color: #007bff;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s, color 0.3s;
-            min-width: 120px; /* Minimum width for small screens */
-            text-align: center; /* Center the text inside the buttons */
-        }
-        
-        #tabs button.active {
-            background-color: #28a745;
-            color: #fff;
-        }
-
-        #visualization {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-        }
-
-        .task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .task {
-            background: #ffffff;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            word-wrap: break-word;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .task.collapsed .description,
-        .task.collapsed .comments,
-        .task.collapsed .timer {
-            display: none;
-        }
-
-        .task.collapsed .buttons {
-            display: none; /* Hide buttons when the task is collapsed */
-        }
-
-        .description {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            cursor: pointer;
-        }
-
-        .task .buttons {
-            display: flex;
-            justify-content: flex-start;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        .task .buttons button {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 10px;
-            font-size: 16px;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            border-radius: 3px;
-            justify-content: flex-start;
-            flex: 1;
-            max-width: 150px;
-            transition: opacity 0.3s;
-            opacity: 0.8;
-        }
-
-        .task .buttons button:hover {
-            opacity: 1;
-        }
-
-        .btn-done { background-color: #28a745; }
-        .btn-cancel { background-color: #d9534f; }
-        .btn-delay { background-color: #ffc107; color: #000; }
-        .btn-await { background-color: #17a2b8; }
-        .btn-doc { background-color: #6f42c1; }
-        .btn-delete { background-color: #dc3545; }
-
-        .comments {
-            margin-top: 10px;
-            padding-left: 20px;
-            border-left: 3px solid #007bff;
-        }
-        
-        .comment-item {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-          padding: 1px 0;
-        }
-        
-        .comment-item p {
-          width: 100%;
-          margin: 0;
-        }
-        .comment-item p {
-            cursor: pointer;
-            flex: 1;
-            margin: 0;
-            font-size: 14px;
-            font-family: courrier-new;
-            white-space: pre-wrap; 
-            word-wrap: break-word;
-        }
-
-        .comment-item .convert-button,
-        .comment-item .delete-button {
-            background-color: #007bff;
-            color: white;
-            padding: 5px;
-            font-size: 12px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            margin-left: 5px;
-        }
-
-        .comment-item .delete-button {
-            background-color: #d9534f;
-        }
-
-        .toggle-icon {
-            cursor: pointer;
-            margin-left: 10px;
-            color: #555;
-        }
-
-        .drag-handle {
-            cursor: grab;
-            margin-right: 10px;
-            color: #555;
-        }
-
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-
-        .timer {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 14px;
-            color: #555;
-            margin-top: 5px;
-            cursor: pointer;
-        }
-
-        #export-import {
-            position: relative;
-            padding: 15px;
-            background-color: #f8f9fa;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            transition: max-height 0.3s ease, padding 0.3s ease;
-            overflow: hidden;
-            max-height: 300px;
-        }
-
-        #export-import.collapsed {
-            max-height: 50px;
-            padding: 10px;
-        }
-
-        #export-import button {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        #export-import button:hover {
-            opacity: 0.9;
-        }
-
-        #export-import .btn-reset {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        #export-import-toggle {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        #export-import-toggle:hover {
-            opacity: 0.9;
-        }
-        
-        .comment_input {
-            width: 100%;
-        }
-        
-        .rationale-item {
-            background-color: #fff3cd;
-            padding: 5px;
-            border-left: 4px solid #ffecb5; 
-            margin: 5px 0;
-        }
-        
-        .btn-inbox {
-            background-color: #007bff; /* or another color of your choice */
-            color: #fff;
-        }
-        
-        .btn-someday {
-            background-color: #FFD700; /* Gold color */
-            color: #000;              /* Black text */
-        }
-        
-        .task h3, p {
-          word-wrap: break-word; 
-          overflow-wrap: break-word;
-          white-space: pre-wrap;  
-          flex-shrink: 1;        
-          min-width: 0;          
-          max-width: 100%;      
-        }
-        @media screen and (max-width: 800px) {
-          /* Make the entire comment item a block */
-          .comment-item {
-            display: block;
-          }
-          /* The comment text takes its own line */
-          .comment-item p {
-            display: block;
-            margin-bottom: 5px;
-          }
-          /* The date and buttons appear on the next line in a row */
-          .comment-item span,
-          .comment-item .convert-button,
-          .comment-item .delete-button {
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 5px; /* Optional: add spacing between controls */
-          }
-        }
-
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linrd</title>
+  <link href="https://fonts.googleapis.com/css?family=Orbitron" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/sugar.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/locales/en.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f4f9;
+      padding-top: 50px;
+    }
+    header {
+      background-color: #000;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+    }
+    header .app-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 24px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+    }
+    .header-right .about-us a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 18px;
+      margin-right: 20px;
+    }
+    .hamburger-menu {
+      position: relative;
+      font-size: 12px;
+    }
+    .hamburger-menu button {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #fff;
+      cursor: pointer;
+    }
+    #export-import {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background-color: #fff;
+      color: #000;
+      min-width: 150px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      display: none;
+      z-index: 9999;
+      flex-direction: column;
+    }
+    #export-import button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      outline: none;
+      font-size: 14px;
+    }
+    #export-import button:hover {
+      background-color: #0056b3;
+    }
+    #export-import.show {
+      display: flex;
+    }
+    #task-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 15px;
+      background: #007bff;
+      color: #fff;
+    }
+    #task-form input {
+      padding: 10px;
+      font-size: 18px;
+      border-radius: 3px;
+      border: 1px solid #ccc;
+    }
+    #task-form button {
+      padding: 10px;
+      font-size: 18px;
+      background: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    #tabs {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      padding: 10px;
+      background-color: #007bff;
+    }
+    #tabs button {
+      flex: 1;
+      margin: 5px;
+      padding: 10px;
+      font-size: 18px;
+      background: #fff;
+      color: #007bff;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s, color 0.3s;
+      min-width: 120px;
+      text-align: center;
+    }
+    #tabs button.active {
+      background-color: #28a745;
+      color: #fff;
+    }
+    #visualization {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+    }
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .task {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      word-wrap: break-word;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .task.collapsed .description,
+    .task.collapsed .comments,
+    .task.collapsed .timer {
+      display: none;
+    }
+    .task.collapsed .buttons {
+      display: none;
+    }
+    .description {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      cursor: pointer;
+    }
+    .task .buttons {
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .task .buttons button {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 10px;
+      font-size: 16px;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 3px;
+      justify-content: flex-start;
+      flex: 1;
+      max-width: 150px;
+      transition: opacity 0.3s;
+      opacity: 0.8;
+    }
+    .task .buttons button:hover {
+      opacity: 1;
+    }
+    .btn-done { background-color: #28a745; }
+    .btn-cancel { background-color: #d9534f; }
+    .btn-delay { background-color: #ffc107; color: #000; }
+    .btn-await { background-color: #17a2b8; }
+    .btn-doc { background-color: #6f42c1; }
+    .btn-delete { background-color: #dc3545; }
+    .comments {
+      margin-top: 10px;
+      padding-left: 20px;
+      border-left: 3px solid #007bff;
+    }
+    .comment-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 1px 0;
+    }
+    .comment-item p {
+      width: 100%;
+      margin: 0;
+    }
+    .comment-item p {
+      cursor: pointer;
+      flex: 1;
+      margin: 0;
+      font-size: 14px;
+      font-family: courrier-new;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .comment-item .convert-button,
+    .comment-item .delete-button {
+      background-color: #007bff;
+      color: white;
+      padding: 5px;
+      font-size: 12px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+    .comment-item .delete-button {
+      background-color: #d9534f;
+    }
+    .toggle-icon {
+      cursor: pointer;
+      margin-left: 10px;
+      color: #555;
+    }
+    .drag-handle {
+      cursor: grab;
+      margin-right: 10px;
+      color: #555;
+    }
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+    .timer {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
+      color: #555;
+      margin-top: 5px;
+      cursor: pointer;
+    }
+    .comment_input {
+      width: 100%;
+    }
+    .rationale-item {
+      background-color: #fff3cd;
+      padding: 5px;
+      border-left: 4px solid #ffecb5;
+      margin: 5px 0;
+    }
+    .btn-inbox {
+      background-color: #007bff;
+      color: #fff;
+    }
+    .btn-someday {
+      background-color: #FFD700;
+      color: #000;
+    }
+    .task h3, p {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+      flex-shrink: 1;
+      min-width: 0;
+      max-width: 100%;
+    }
+    @media screen and (max-width: 800px) {
+      .comment-item {
+        display: block;
+      }
+      .comment-item p {
+        display: block;
+        margin-bottom: 5px;
+      }
+      .comment-item span,
+      .comment-item .convert-button,
+      .comment-item .delete-button {
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 5px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <form id="task-form">
-        <input type="text" id="new-task-name" placeholder="Task Name" required>
-        <input type="text" id="new-task-description" placeholder="Description">
-        <button type="submit">Add</button>
-    </form>
-
-    <div id="tabs">
-        <button onclick="changeTab('inbox')" class="active">Inbox (<span class="badge" id="count-inbox">0</span>)</button>
-        <button onclick="changeTab('done')">Done</button>
-        <button onclick="changeTab('cancel')">Cancel</button>
-        <button onclick="changeTab('delay')">Delay (<span class="badge" id="count-delay">0</span>)</button>
-        <button onclick="changeTab('await')">Await (<span class="badge" id="count-await">0</span>)</button>
-        <button onclick="changeTab('doc')">Doc</button>
-        <button onclick="changeTab('someday')">Someday</button>
+  <header>
+    <div class="header-left">
+      <div class="app-title">Linrdv3</div>
     </div>
-
-    <div id="visualization">
-        <div class="task-list" id="task-list"></div>
-    </div>
-
-    <div id="export-import">
+    <div class="header-right">
+      <div class="hamburger-menu">
         <button id="export-import-toggle" onclick="toggleExportImport()">☰</button>
-        <button onclick="exportData()">Export Data</button>
-        <button onclick="document.getElementById('import-file').click()">Import Data</button>
-        <input type="file" id="import-file" onchange="importData(event)" style="display:none;">
-        <button onclick="forkApplication()">Fork the Application</button>
-        <button class="btn-reset" onclick="resetInterface()">Reset</button>
+        <div id="export-import">
+          <button onclick="exportData()">Export Data</button>
+          <button onclick="document.getElementById('import-file').click()">Import Data</button>
+          <input type="file" id="import-file" onchange="importData(event)" style="display:none;">
+          <button class="btn-reset" onclick="resetInterface()">Reset</button>
+        </div>
+      </div>
     </div>
-
-    <script>
-        // Check if Sugar.js is loaded
-        if (typeof Sugar === 'undefined') {
-            console.error("Sugar.js is not loaded correctly. Please check the script inclusion.");
+  </header>
+  <form id="task-form">
+    <input type="text" id="new-task-name" placeholder="Task Name" required>
+    <input type="text" id="new-task-description" placeholder="Description">
+    <button type="submit">Add</button>
+  </form>
+  <div id="tabs">
+    <button onclick="changeTab('inbox')" class="active">Inbox (<span class="badge" id="count-inbox">0</span>)</button>
+    <button onclick="changeTab('done')">Done</button>
+    <button onclick="changeTab('cancel')">Cancel</button>
+    <button onclick="changeTab('delay')">Delay (<span class="badge" id="count-delay">0</span>)</button>
+    <button onclick="changeTab('await')">Await (<span class="badge" id="count-await">0</span>)</button>
+    <button onclick="changeTab('doc')">Doc</button>
+    <button onclick="changeTab('someday')">Someday</button>
+  </div>
+  <div id="visualization">
+    <div class="task-list" id="task-list"></div>
+  </div>
+  <script>
+    if(typeof Sugar==='undefined'){console.error("Sugar.js is not loaded correctly. Please check the script inclusion.");}
+    let tasks=[];
+    let taskIdCounter=0;
+    let currentTab='inbox';
+    let worker;
+    let countdownInterval;
+    window.addEventListener('load',function(){
+      const savedTasks=localStorage.getItem('tasks');
+      if(savedTasks){
+        try{
+          tasks=JSON.parse(savedTasks);
+          const maxId=tasks.reduce(function(max,task){return task.id>max?task.id:max;},0);
+          taskIdCounter=maxId+1;
+          renderTasks();
+        }catch(error){console.error("Error loading tasks:",error);tasks=[];taskIdCounter=0;}
+      }
+      const savedForm=localStorage.getItem('taskForm');
+      if(savedForm){
+        const formData=JSON.parse(savedForm);
+        document.getElementById('new-task-name').value=formData.name||'';
+        document.getElementById('new-task-description').value=formData.description||'';
+      }
+      const exportImportCollapsed=localStorage.getItem('exportImportCollapsed');
+      if(exportImportCollapsed==='true'||exportImportCollapsed===null){
+        document.getElementById('export-import').classList.remove('show');
+      }else{
+        document.getElementById('export-import').classList.add('show');
+      }
+      initializeWorker();
+      startCountdown();
+    });
+    document.getElementById('new-task-name').addEventListener('input',saveForm);
+    document.getElementById('new-task-description').addEventListener('input',saveForm);
+    document.getElementById('task-form').addEventListener('submit',function(event){
+      event.preventDefault();
+      const name=document.getElementById('new-task-name').value.trim();
+      const description=document.getElementById('new-task-description').value.trim();
+      if(name){
+        const now=new Date();
+        const task={id:taskIdCounter++,name:name,description:description,comments:[],status:"inbox",createdDate:now,modifiedDate:now,collapsed:true,targetDate:null,parentId:null,order:getMaxOrder('inbox')+1};
+        tasks.push(task);
+        saveAndRenderTasks();
+        document.getElementById('new-task-name').value='';
+        document.getElementById('new-task-description').value='';
+        localStorage.removeItem('taskForm');
+      }
+    });
+    function saveForm(){
+      const formData={name:document.getElementById('new-task-name').value,description:document.getElementById('new-task-description').value};
+      localStorage.setItem('taskForm',JSON.stringify(formData));
+    }
+    function getMaxOrder(status){
+      const filtered=tasks.filter(function(task){return task.status===status;});
+      if(filtered.length===0)return 0;
+      return Math.max.apply(null,filtered.map(function(task){return task.order||0;}));
+    }
+    function saveAndRenderTasks(){
+      localStorage.setItem('tasks',JSON.stringify(tasks));
+      renderTasks();
+      if(worker){worker.postMessage({action:'updateTasks',tasks:tasks});}
+    }
+    function renderTasks(){
+      updateTabCounts();
+      const taskList=document.getElementById('task-list');
+      taskList.innerHTML='';
+      let filteredTasks=tasks.filter(function(task){return task.status===currentTab;});
+      if(currentTab==='inbox'){
+        filteredTasks.sort(function(a,b){return new Date(b.createdDate)-new Date(a.createdDate);});
+      }else{
+        filteredTasks.sort(function(a,b){return new Date(b.modifiedDate)-new Date(a.modifiedDate);});
+      }
+      filteredTasks.forEach(function(task){
+        const taskEl=document.createElement('div');
+        taskEl.className='task '+(task.collapsed?'collapsed':'');
+        taskEl.setAttribute('data-task-id',task.id);
+        const parentChain=getParentChain(task);
+        const fullTitle=parentChain.length>0?parentChain.join(' > ')+' > '+task.name:task.name;
+        let timerHtml='';
+        if(task.status==='delay'||task.status==='await'){
+          const remaining=getRemainingTime(task.targetDate);
+          if(remaining>0){
+            timerHtml=`<div class="timer" onclick="modifyDeadline(${task.id})"><i class="fas fa-clock"></i> ${formatTime(remaining)}</div>`;
+          }else{
+            timerHtml=`<div class="timer" onclick="modifyDeadline(${task.id})"><i class="fas fa-clock"></i> 00:00:00</div>`;
+          }
         }
-
-        let tasks = [];
-        let taskIdCounter = 0;
-        let currentTab = 'inbox';
-        let worker;
-        let countdownInterval;
-
-        // Load tasks from localStorage on window load
-        window.addEventListener('load', function() {
-            const savedTasks = localStorage.getItem('tasks');
-            if (savedTasks) {
-                try {
-                    tasks = JSON.parse(savedTasks);
-                    const maxId = tasks.reduce(function(max, task) {
-                        return task.id > max ? task.id : max;
-                    }, 0);
-                    taskIdCounter = maxId + 1;
-                    renderTasks();
-                } catch (error) {
-                    console.error("Error loading tasks:", error);
-                    tasks = [];
-                    taskIdCounter = 0;
-                }
-            }
-
-            const savedForm = localStorage.getItem('taskForm');
-            if (savedForm) {
-                const formData = JSON.parse(savedForm);
-                document.getElementById('new-task-name').value = formData.name || '';
-                document.getElementById('new-task-description').value = formData.description || '';
-            }
-
-            const exportImportCollapsed = localStorage.getItem('exportImportCollapsed');
-            // If exportImportCollapsed is 'true' or null, keep it collapsed by default
-            if (exportImportCollapsed === 'true' || exportImportCollapsed === null) {
-                document.getElementById('export-import').classList.add('collapsed');
-            } else {
-                document.getElementById('export-import').classList.remove('collapsed');
-            }
-
-            initializeWorker();
-            startCountdown();
-        });
-
-        document.getElementById('new-task-name').addEventListener('input', saveForm);
-        document.getElementById('new-task-description').addEventListener('input', saveForm);
-
-        // Save form content to localStorage
-        function saveForm() {
-            const formData = {
-                name: document.getElementById('new-task-name').value,
-                description: document.getElementById('new-task-description').value
-            };
-            localStorage.setItem('taskForm', JSON.stringify(formData));
+        taskEl.innerHTML=`<div style="display: flex; align-items: center;">
+          <i class="fas fa-bars drag-handle"></i>
+          <h3 style="flex: 1;" onclick="editTaskName(event, ${task.id})">${renderTextWithLinks(fullTitle)}</h3>
+          <span class="toggle-icon" onclick="toggleTask(${task.id})">${task.collapsed?'▶️':'▼'}</span>
+        </div>
+        ${timerHtml}
+        <pre class="description" onclick="editTaskDescription(event, ${task.id})">${renderTextWithLinks(task.description||'No description')}</pre>
+        <div class="buttons">
+          ${renderActionButton(task,'done')}
+          ${renderActionButton(task,'cancel')}
+          ${renderActionButton(task,'delay')}
+          ${renderActionButton(task,'await')}
+          ${renderActionButton(task,'doc')}
+          ${renderActionButton(task,'inbox')}
+          ${renderActionButton(task,'someday')}
+          <button class="btn-delete" onclick="confirmDelete(${task.id})"><i class="fas fa-trash"></i> Delete</button>
+        </div>
+        <div class="comments" id="comments-${task.id}">
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <textarea id="comment-input-${task.id}" class="comment_input" type="text" placeholder="Add a comment that could become a subtask if you wish later on" oninput="saveCommentInput(${task.id}, this.value)" value="${renderTextWithLinks(getSavedCommentInput(task.id))}"></textarea>
+            <button onclick="addCommentFromButton(${task.id})">Add</button>
+          </div>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">
+          ${renderComments(task.comments, task.id)}
+        </div>`;
+        taskList.appendChild(taskEl);
+      });
+      if(currentTab==='inbox'){
+        initializeSortable();
+      }
+    }
+    function renderActionButton(task,action){
+      if(task.status===action){return '';}
+      if(action==='inbox'){
+        if(task.status!=='inbox'){
+          return `<button class="btn-inbox" onclick="handleAction(${task.id}, 'inbox')">
+          <i class="fas fa-inbox"></i> Inbox
+          </button>`;
+        }else{return '';}
+      }
+      return `<button class="btn-${action}" onclick="handleAction(${task.id}, '${action}')">
+      <i class="fas fa-${getIcon(action)}"></i> ${capitalize(action)}
+      </button>`;
+    }
+    function getIcon(action){
+      const icons={'done':'check','cancel':'times','delay':'clock','await':'hourglass','doc':'file-alt','inbox':'inbox','someday':'lightbulb'};
+      return icons[action]||'question';
+    }
+    function capitalize(word){
+      return word.charAt(0).toUpperCase()+word.slice(1);
+    }
+    function renderComments(comments,taskId){
+      if(!comments||comments.length===0){return '<p>No comments.</p>';}
+      const sortedComments=comments.slice().sort(function(a,b){return b.id-a.id;});
+      return sortedComments.map(function(comment){
+        if(comment.type==='rationale'){
+          return `<div class="comment-item rationale-item">
+          <p onclick="editComment(event, ${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
+          <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
+          </div>`;
+        }else{
+          return `<div class="comment-item">
+          <p onclick="editComment(event, ${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
+          <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
+          <button class="convert-button" onclick="convertCommentToTask(${taskId}, ${comment.id})">Convert to Task</button>
+          <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Delete</button>
+          </div>`;
         }
-
-        // Handle new task form submission
-        document.getElementById('task-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const name = document.getElementById('new-task-name').value.trim();
-            const description = document.getElementById('new-task-description').value.trim();
-            if (name) {
-                const now = new Date();
-                const task = {
-                    id: taskIdCounter++,
-                    name: name,
-                    description: description,
-                    comments: [],
-                    status: "inbox",
-                    createdDate: now,
-                    modifiedDate: now,
-                    collapsed: true,
-                    targetDate: null,
-                    parentId: null,
-                    order: getMaxOrder('inbox') + 1
-                };
-                tasks.push(task);
-                saveAndRenderTasks();
-                document.getElementById('new-task-name').value = '';
-                document.getElementById('new-task-description').value = '';
-                localStorage.removeItem('taskForm');
-            }
-        });
-
-        // Get the maximum "order" for tasks in a specific status
-        function getMaxOrder(status) {
-            const filtered = tasks.filter(function(task) {
-                return task.status === status;
+      }).join('<hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">');
+    }
+    function toggleTask(taskId){
+      const task=tasks.find(function(t){return t.id===taskId;});
+      if(task){task.collapsed=!task.collapsed;saveAndRenderTasks();}
+    }
+    function changeTab(tab){
+      currentTab=tab;
+      document.querySelectorAll("#tabs button").forEach(function(button){button.classList.remove("active");});
+      const activeButton=document.querySelector(`#tabs button[onclick="changeTab('${tab}')"]`);
+      if(activeButton){activeButton.classList.add("active");}
+      renderTasks();
+    }
+    function handleAction(taskId,actionType){
+      const task=tasks.find(function(t){return t.id===taskId;});
+      if(!task){console.error("Task with ID "+taskId+" not found.");return;}
+      if(actionType==='delay'){
+        const success=modifyDeadline(taskId,true);
+        if(!success){return;}
+        const rationale=prompt(`Please add a rationale for "delay":`);
+        if(rationale&&rationale.trim()!==""){addRationaleToTask(taskId,rationale.trim());}else{alert("A rationale is required.");return;}
+        task.status='delay';
+        task.order=undefined;
+        task.modifiedDate=new Date();
+      }
+      else if(actionType==='await'){
+        modifyDeadline(taskId,false);
+        let rationale=prompt(`Add a rationale for "await" (optional). Leave blank or click Cancel to skip:`);
+        if(!rationale||rationale.trim()===""){rationale="Task awaited by user.";}
+        if(rationale&&rationale.trim()!==""){addRationaleToTask(taskId,rationale.trim());}
+        task.status='await';
+        task.order=undefined;
+        task.modifiedDate=new Date();
+      }
+      else if(actionType==='done'||actionType==='cancel'||actionType==='doc'){
+        const comment=prompt(`Please add a comment for "${actionType}" (leave empty to skip):`);
+        if(comment&&comment.trim()!==""){addCommentToTask(taskId,comment.trim());}
+        task.status=actionType;
+        task.order=undefined;
+        task.modifiedDate=new Date();
+      }
+      else if(actionType==='someday'){
+        const agree=confirm(`This action is going to be sidelined, do you agree?`);
+        if(!agree){return;}
+        task.status='someday';
+        task.order=undefined;
+        task.modifiedDate=new Date();
+      }
+      else if(actionType==='inbox'){
+        if(task.status==='delay'||task.status==='await'){
+          addRationaleToTask(taskId,'Task put back into the inbox by user');
+          task.targetDate=null;
+        }
+        task.status='inbox';
+        task.order=undefined;
+        task.modifiedDate=new Date();
+      }
+      saveAndRenderTasks();
+    }
+    function addComment(event,taskId){
+      if(event.key==='Enter'){
+        const commentText=event.target.value.trim();
+        if(commentText){
+          addCommentToTask(taskId,commentText);
+          event.target.value='';
+          removeSavedCommentInput(taskId);
+          saveAndRenderTasks();
+        }
+      }
+    }
+    function addCommentToTask(taskId,commentText){
+      const task=tasks.find(function(t){return t.id===taskId;});
+      if(task){
+        commentText=formatText(commentText);
+        task.comments.push({id:Date.now(),text:commentText,date:Sugar.Date.format(new Date(),'%d/%m/%Y %H:%M:%S')});
+        task.modifiedDate=new Date();
+      }
+    }
+    function editTaskName(e,taskId){
+      if(e.target.tagName.toLowerCase()==='a'){return;}
+      const task=tasks.find(function(t){return t.id===taskId;});
+      if(task){
+        const newName=prompt("Edit the task name:",task.name);
+        if(newName!==null&&newName.trim()!==""){task.name=newName.trim();task.modifiedDate=new Date();saveAndRenderTasks();}
+      }
+    }
+    function editTaskDescription(e,taskId){
+      if(e.target.tagName.toLowerCase()==='a'){return;}
+      const task=tasks.find(function(t){return t.id===taskId;});
+      if(task){
+        const newDescription=prompt("Edit the task description:",task.description);
+        if(newDescription!==null){task.description=newDescription.trim();task.modifiedDate=new Date();saveAndRenderTasks();}
+      }
+    }
+    function editComment(e,taskId,commentId){
+      if(e.target.tagName.toLowerCase()==='a'){return;}
+      const task=tasks.find(function(t){return t.id===taskId;});
+      if(task){
+        const comment=task.comments.find(function(c){return c.id===commentId;});
+        if(comment){
+          const newText=prompt("Edit the comment:",comment.text);
+          if(newText!==null&&newText.trim()!==""){comment.text=newText.trim();comment.date=Sugar.Date.format(new Date(),'%d/%m/%Y %H:%M:%S');task.modifiedDate=new Date();saveAndRenderTasks();}
+        }
+      }
+    }
+    function confirmDelete(taskId){
+      if(confirm("Are you sure you want to delete this task? All its sub-tasks will also be deleted.")){
+        deleteTask(taskId);
+      }
+    }
+    function deleteTask(taskId){
+      const deleteRecursively=function(id){
+        const subTasks=tasks.filter(function(t){return t.parentId===id;});
+        subTasks.forEach(function(subTask){deleteRecursively(subTask.id);});
+        tasks=tasks.filter(function(t){return t.id!==id;});
+      };
+      deleteRecursively(taskId);
+      saveAndRenderTasks();
+    }
+    function convertCommentToTask(taskId,commentId){
+      const parentTask=tasks.find(function(t){return t.id===taskId;});
+      if(!parentTask)return;
+      const comment=parentTask.comments.find(function(c){return c.id===commentId;});
+      if(!comment)return;
+      const newTask={id:taskIdCounter++,name:comment.text,description:"",comments:[],status:"inbox",createdDate:new Date(),modifiedDate:new Date(),collapsed:true,targetDate:null,parentId:parentTask.id,order:getMaxOrder('inbox')+1};
+      tasks.push(newTask);
+      parentTask.comments=parentTask.comments.filter(function(c){return c.id!==commentId;});
+      parentTask.modifiedDate=new Date();
+      saveAndRenderTasks();
+    }
+    function getParentChain(task){
+      let chain=[];
+      let currentTask=task;
+      while(currentTask.parentId!==null){
+        const parentTask=tasks.find(function(t){return t.id===currentTask.parentId;});
+        if(parentTask){chain.unshift(parentTask.name);currentTask=parentTask;}else{break;}
+      }
+      return chain;
+    }
+    function deleteComment(taskId,commentId){
+      if(!confirm("Are you sure you want to delete this comment?")){return;}
+      const task=tasks.find(function(t){return t.id===taskId;});
+      if(task){
+        const comment=task.comments.find(c=>c.id===commentId);
+        if(comment&&comment.type==='rationale'){alert("You cannot delete a rationale.");return;}
+        task.comments=task.comments.filter(function(c){return c.id!==commentId;});
+        task.modifiedDate=new Date();
+        saveAndRenderTasks();
+      }
+    }
+    function saveCommentInput(taskId,value){
+      localStorage.setItem('commentInput-'+taskId,value);
+    }
+    function getSavedCommentInput(taskId){
+      return localStorage.getItem('commentInput-'+taskId)||'';
+    }
+    function removeSavedCommentInput(taskId){
+      localStorage.removeItem('commentInput-'+taskId);
+    }
+    function resetInterface(){
+      if(confirm("Are you sure you want to reset the interface? All tasks will be deleted.")){
+        tasks=[];
+        taskIdCounter=0;
+        localStorage.removeItem('tasks');
+        localStorage.removeItem('taskForm');
+        Object.keys(localStorage).forEach(function(key){if(key.startsWith('commentInput-')){localStorage.removeItem(key);}});
+        saveAndRenderTasks();
+      }
+    }
+    function exportData(){
+      const data=JSON.stringify(tasks,null,2);
+      const blob=new Blob([data],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download='tasks.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    function importData(event){
+      const file=event.target.files[0];
+      const reader=new FileReader();
+      reader.onload=function(e){
+        try{
+          const importedTasks=JSON.parse(e.target.result);
+          if(Array.isArray(importedTasks)){
+            tasks=importedTasks.map(function(task){
+              return Object.assign({},task,{order:task.status==='inbox'?(task.order||getMaxOrder('inbox')+1):undefined});
             });
-            if (filtered.length === 0) return 0;
-            return Math.max.apply(null, filtered.map(function(task) {
-                return task.order || 0;
-            }));
-        }
-
-        function saveAndRenderTasks() {
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-            renderTasks();
-            if (worker) {
-                worker.postMessage({ action: 'updateTasks', tasks: tasks });
-            }
-        }
-
-        function renderTasks() {
-            updateTabCounts();
-            const taskList = document.getElementById('task-list');
-            taskList.innerHTML = '';
-
-            // Filter tasks by current tab
-            let filteredTasks = tasks.filter(function(task) {
-                return task.status === currentTab;
-            });
-
-            // For "Inbox", sort by creation date descending (most recent on top)
-            if (currentTab === 'inbox') {
-                filteredTasks.sort(function(a, b) {
-                    return new Date(b.createdDate) - new Date(a.createdDate);
-                });
-            } else {
-                // For other tabs, sort by modified date descending
-                filteredTasks.sort(function(a, b) {
-                    return new Date(b.modifiedDate) - new Date(a.modifiedDate);
-                });
-            }
-
-            filteredTasks.forEach(function(task) {
-                const taskEl = document.createElement('div');
-                taskEl.className = 'task ' + (task.collapsed ? 'collapsed' : '');
-                taskEl.setAttribute('data-task-id', task.id);
-
-                const parentChain = getParentChain(task);
-                const fullTitle = parentChain.length > 0
-                    ? parentChain.join(' > ') + ' > ' + task.name
-                    : task.name;
-
-                let timerHtml = '';
-                if (task.status === 'delay' || task.status === 'await') {
-                    const remaining = getRemainingTime(task.targetDate);
-                    if (remaining > 0) {
-                        timerHtml = `<div class="timer" onclick="modifyDeadline(${task.id})"><i class="fas fa-clock"></i> ${formatTime(remaining)}</div>`;
-                    } else {
-                        timerHtml = `<div class="timer" onclick="modifyDeadline(${task.id})"><i class="fas fa-clock"></i> 00:00:00</div>`;
-                    }
-                }
-
-                taskEl.innerHTML = 
-                    `<div style="display: flex; align-items: center;">
-                        <i class="fas fa-bars drag-handle"></i>
-                        <h3 style="flex: 1;" onclick="editTaskName(event, ${task.id})">${renderTextWithLinks(fullTitle)}</h3>
-                        <span class="toggle-icon" onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'}</span>
-                    </div>
-                    ${timerHtml}
-                    <pre class="description" onclick="editTaskDescription(event, ${task.id})">${renderTextWithLinks(task.description || 'No description')}</pre>
-                    <div class="buttons">
-                        ${renderActionButton(task, 'done')}
-                        ${renderActionButton(task, 'cancel')}
-                        ${renderActionButton(task, 'delay')}
-                        ${renderActionButton(task, 'await')}
-                        ${renderActionButton(task, 'doc')}
-                        ${renderActionButton(task, 'inbox')}
-                        ${renderActionButton(task, 'someday')} 
-                        <button class="btn-delete" onclick="confirmDelete(${task.id})"><i class="fas fa-trash"></i> Delete</button>
-                    </div>
-                    <div class="comments" id="comments-${task.id}">
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <textarea id="comment-input-${task.id}" class="comment_input" type="text" placeholder="Add a comment that could become a subtask if you wish later on"
-                                   oninput="saveCommentInput(${task.id}, this.value)"
-                                   value="${renderTextWithLinks(getSavedCommentInput(task.id))}"></textarea>
-                            <button onclick="addCommentFromButton(${task.id})">Add</button>
-                        </div>
-                        <hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">
-                        ${renderComments(task.comments, task.id)}
-                    </div>`;
-
-                taskList.appendChild(taskEl);
-            });
-
-            // Initialize drag-and-drop sorting only for "Inbox"
-            if (currentTab === 'inbox') {
-                initializeSortable();
-            }
-        }
-
-        function renderActionButton(task, action) {
-            if (task.status === action) {
-                return '';
-            }
-            if (action === 'inbox') {
-                if (task.status !== 'inbox') {
-                    return `<button class="btn-inbox" onclick="handleAction(${task.id}, 'inbox')">
-                                <i class="fas fa-inbox"></i> Inbox
-                            </button>`;
-                } else {
-                    return '';
-                }
-            }
-            return `<button class="btn-${action}" onclick="handleAction(${task.id}, '${action}')">
-                        <i class="fas fa-${getIcon(action)}"></i> ${capitalize(action)}
-                    </button>`;
-        }
-
-        function getIcon(action) {
-            const icons = {
-                'done': 'check',
-                'cancel': 'times',
-                'delay': 'clock',
-                'await': 'hourglass',
-                'doc': 'file-alt',
-                'inbox': 'inbox',
-                'someday': 'lightbulb'
-            };
-            return icons[action] || 'question';
-        }
-
-        function capitalize(word) {
-            return word.charAt(0).toUpperCase() + word.slice(1);
-        }
-
-        function renderComments(comments, taskId) {
-            if (!comments || comments.length === 0) {
-                return '<p>No comments.</p>';
-            }
-            const sortedComments = comments.slice().sort(function(a, b) {
-                return b.id - a.id; // Newest comment first
-            });
-            return sortedComments.map(function(comment) {
-                // If this comment is a 'rationale', render it differently:
-                if (comment.type === 'rationale') {
-                    return `
-                        <div class="comment-item rationale-item">
-                        <p onclick="editComment(event, ${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
-                        <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
-                        </div>
-                    `;
-                } else {
-                    return `<div class="comment-item">
-                                <p onclick="editComment(event, ${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
-                                <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
-                                <button class="convert-button" onclick="convertCommentToTask(${taskId}, ${comment.id})">Convert to Task</button>
-                                <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Delete</button>
-                            </div>`;
-                }
-            }).join('<hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">');
-        }
-
-        function toggleTask(taskId) {
-            const task = tasks.find(function(t) {
-                return t.id === taskId;
-            });
-            if (task) {
-                task.collapsed = !task.collapsed;
-                saveAndRenderTasks();
-            }
-        }
-
-        function changeTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll("#tabs button").forEach(function(button) {
-                button.classList.remove("active");
-            });
-            const activeButton = document.querySelector(`#tabs button[onclick="changeTab('${tab}')"]`);
-            if (activeButton) {
-                activeButton.classList.add("active");
-            }
-            renderTasks();
-        }
-
-        function handleAction(taskId, actionType) {
-            const task = tasks.find(function(t) {
-                return t.id === taskId;
-            });
-            if (!task) {
-                console.error("Task with ID " + taskId + " not found.");
-                return;
-            }
-
-            if (actionType === 'delay') {
-                // Must choose a valid deadline
-                const success = modifyDeadline(taskId, true);  // Pass "true" for mandatory
-                if (!success) {
-                    // If user canceled or gave no valid date, do not proceed
-                    return;
-                }
-                // Add rationale
-                const rationale = prompt(`Please add a rationale for "delay":`);
-                if (rationale && rationale.trim() !== "") {
-                    addRationaleToTask(taskId, rationale.trim());
-                } else {
-                    alert("A rationale is required.");
-                    return; 
-                }
-                task.status = 'delay';
-                task.order = undefined;
-                task.modifiedDate = new Date();
-            }
-            
-            else if (actionType === 'await') {
-                // Optional deadline
-                modifyDeadline(taskId, false);  // Pass "false" for optional
-                // Add rationale
-                let rationale = prompt(`Add a rationale for "await" (optional). Leave blank or click Cancel to skip:`);
-                
-                if (!rationale || rationale.trim() === "") {
-                    rationale = "Task awaited by user.";
-                }
-                
-                if (rationale && rationale.trim() !== "") {
-                    addRationaleToTask(taskId, rationale.trim());
-                }
-                task.status = 'await';
-                task.order = undefined;
-                task.modifiedDate = new Date();
-            }
-
-
-            // For other actions (done, cancel, doc)
-            else if (actionType === 'done' || actionType === 'cancel' || actionType === 'doc') {
-                const comment = prompt(`Please add a comment for "${actionType}" (leave empty to skip):`);
-                if (comment && comment.trim() !== "") {
-                    addCommentToTask(taskId, comment.trim());
-                }
-
-                task.status = actionType;
-                task.order = undefined;
-                task.modifiedDate = new Date();
-            }
-            
-            else if (actionType === 'someday') {
-                const agree = confirm(`This action is going to be sidelined, do you agree?`);
-                if (! agree) {
-                    return;
-                }
-                task.status = 'someday';
-                task.order = undefined; // We want to reset the order if needed
-                task.modifiedDate = new Date();
-            }
-            
-            else if (actionType === 'inbox') {
-                if (task.status === 'delay' || task.status === 'await') {
-                    addRationaleToTask(taskId, 'Task put back into the inbox by user');
-                    task.targetDate = null;  // Remove any waiting delay
-                }
-                task.status = 'inbox';
-                task.order = undefined;     // Consistent with how other status changes reset order
-                task.modifiedDate = new Date();
-            }
-
+            const maxId=tasks.reduce(function(max,task){return task.id>max?task.id:max;},0);
+            taskIdCounter=maxId+1;
             saveAndRenderTasks();
+            alert("Data imported successfully!");
+          }else{
+            alert("The imported file is not valid.");
+          }
+        }catch(error){
+          alert("Error importing data.");
         }
-
-        // Add a comment when Enter is pressed in the comment input
-        function addComment(event, taskId) {
-            if (event.key === 'Enter') {
-                const commentText = event.target.value.trim();
-                if (commentText) {
-                    addCommentToTask(taskId, commentText);
-                    event.target.value = '';
-                    removeSavedCommentInput(taskId);
-                    saveAndRenderTasks();
-                }
+      };
+      reader.readAsText(file);
+    }
+    function initializeWorker(){
+      const workerCode=`function createDate(input){return new Date(input);}function isBeforeOrSame(date1,date2){return date1.getTime()<=date2.getTime();}self.onmessage=function(event){if(event.data.action==='updateTasks'){const tasks=event.data.tasks;monitorTasks(tasks);}};function monitorTasks(tasks){setInterval(function(){const now=new Date();let updated=false;tasks.forEach(function(task){if((task.status==='delay'||task.status==='await')&&task.targetDate){const targetDate=createDate(task.targetDate);if(isBeforeOrSame(targetDate,now)){task.status='inbox';task.modifiedDate=new Date();task.order=getMaxOrder(tasks,'inbox')+1;task.targetDate=null;updated=true;}}});if(updated){postMessage({action:'refreshTasks',tasks:tasks});}},1000);}function getMaxOrder(tasks,status){const filtered=tasks.filter(function(task){return task.status===status;});if(filtered.length===0)return 0;return Math.max.apply(null,filtered.map(function(task){return task.order||0;}));}`;
+      const blob=new Blob([workerCode],{type:'application/javascript'});
+      const workerURL=URL.createObjectURL(blob);
+      worker=new Worker(workerURL);
+      worker.onmessage=function(event){if(event.data.action==='refreshTasks'){tasks=event.data.tasks;saveAndRenderTasks();}};
+      worker.postMessage({action:'updateTasks',tasks:tasks});
+    }
+    function initializeSortable(){
+      const taskList=document.getElementById('task-list');
+      Sortable.create(taskList,{animation:150,handle:'.drag-handle',onEnd:function(evt){
+        const itemEl=evt.item;
+        const movedTaskId=parseInt(itemEl.getAttribute('data-task-id'));
+        const oldIndex=evt.oldIndex;
+        const newIndex=evt.newIndex;
+        let filteredTasks=tasks.filter(function(task){return task.status==='inbox';});
+        const movedTask=filteredTasks.splice(oldIndex,1)[0];
+        filteredTasks.splice(newIndex,0,movedTask);
+        filteredTasks.forEach(function(task,index){task.order=index+1;});
+        saveAndRenderTasks();
+      }});
+    }
+    function toggleExportImport(){
+      const exportImportDiv=document.getElementById('export-import');
+      exportImportDiv.classList.toggle('show');
+    }
+    function startCountdown(){
+      if(countdownInterval)clearInterval(countdownInterval);
+      countdownInterval=setInterval(updateCountdowns,1000);
+    }
+    function updateCountdowns(){
+      tasks.forEach(function(task){
+        if(task.status==='delay'){
+          const remaining=getRemainingTime(task.targetDate);
+          const taskEl=document.querySelector('[data-task-id="'+task.id+'"]');
+          if(taskEl){
+            const timerEl=taskEl.querySelector('.timer');
+            if(timerEl){if(remaining>0){timerEl.innerHTML='<i class="fas fa-clock"></i> '+formatTime(remaining);}else{timerEl.innerHTML='<i class="fas fa-clock"></i> 00:00:00';}}
+          }
+        }
+        else if(task.status==='await'){
+          if(!task.targetDate){
+            const taskEl=document.querySelector('[data-task-id="'+task.id+'"]');
+            if(taskEl){
+              const timerEl=taskEl.querySelector('.timer');
+              if(timerEl){timerEl.innerHTML="";}
             }
-        }
-
-        function addCommentToTask(taskId, commentText) {
-            const task = tasks.find(function(t) {
-                return t.id === taskId;
-            });
-            if (task) {
-                commentText = formatText(commentText);
-                task.comments.push({
-                    id: Date.now(),
-                    text: commentText,
-                    date: Sugar.Date.format(new Date(), '%d/%m/%Y %H:%M:%S')
-                });
-                task.modifiedDate = new Date();
+          }else{
+            const remaining=getRemainingTime(task.targetDate);
+            const taskEl=document.querySelector('[data-task-id="'+task.id+'"]');
+            if(taskEl){
+              const timerEl=taskEl.querySelector('.timer');
+              if(timerEl){if(remaining>0){timerEl.innerHTML='<i class="fas fa-clock"></i> '+formatTime(remaining);}else{timerEl.innerHTML='<i class="fas fa-clock"></i> 00:00:00';}}
             }
+          }
         }
-
-        function editTaskName(e, taskId) {
-            // If the user clicked on an <a> link, let it open in a new tab and DO NOT edit.
-            if (e.target.tagName.toLowerCase() === 'a') {
-              return; 
-            }
-            const task = tasks.find(function(t) {
-                return t.id === taskId;
-            });
-            if (task) {
-                const newName = prompt("Edit the task name:", task.name);
-                if (newName !== null && newName.trim() !== "") {
-                    task.name = newName.trim();
-                    task.modifiedDate = new Date();
-                    saveAndRenderTasks();
-                }
-            }
+      });
+    }
+    function getRemainingTime(targetDate){
+      const now=new Date();
+      const target=Sugar.Date.create(targetDate);
+      return target-now>0?target-now:0;
+    }
+    function formatTime(ms){
+      const totalSeconds=Math.floor(ms/1000);
+      const days=Math.floor(totalSeconds/86400);
+      const hours=Math.floor((totalSeconds%86400)/3600);
+      const minutes=Math.floor((totalSeconds%3600)/60);
+      const seconds=totalSeconds%60;
+      let parts=[];
+      if(days>0){parts.push(days+'d');if(hours>0)parts.push(hours+'h');}else if(hours>0){parts.push(hours+'h');if(minutes>0)parts.push(minutes+'m');}else if(minutes>0){parts.push(minutes+'m');if(seconds>0)parts.push(seconds+'s');}else{parts.push(seconds+'s');}
+      return parts.join(' ');
+    }
+    Sugar.Date.setLocale('en');
+    function parseDateExpression(input,baseDate){
+      input=input.toLowerCase().trim();
+      const now=baseDate||new Date();
+      if(input==="tomorrow"){return Sugar.Date.advance(now,{days:1});}else if(input==="day after tomorrow"){return Sugar.Date.advance(now,{days:2});}
+      const matchRelativeTime=input.match(/in\s+(\d+)\s+(minutes?|hours?|days?|seconds?)/);
+      if(matchRelativeTime){
+        const value=parseInt(matchRelativeTime[1],10);
+        const unit=matchRelativeTime[2];
+        let futureDate;
+        switch(unit){
+          case 'minute':
+          case 'minutes':
+            futureDate=Sugar.Date.advance(now,{minutes:value});
+            break;
+          case 'hour':
+          case 'hours':
+            futureDate=Sugar.Date.advance(now,{hours:value});
+            break;
+          case 'day':
+          case 'days':
+            futureDate=Sugar.Date.advance(now,{days:value});
+            break;
+          case 'second':
+          case 'seconds':
+            futureDate=Sugar.Date.advance(now,{seconds:value});
+            break;
         }
-
-        function editTaskDescription(e, taskId) {
-            // If the user clicked a link, skip editing
-            if (e.target.tagName.toLowerCase() === 'a') {
-              return;
-            }
-            const task = tasks.find(function(t) {
-                return t.id === taskId;
-            });
-            if (task) {
-                const newDescription = prompt("Edit the task description:", task.description);
-                if (newDescription !== null) {
-                    task.description = newDescription.trim();
-                    task.modifiedDate = new Date();
-                    saveAndRenderTasks();
-                }
-            }
+        if(Sugar.Date.isValid(futureDate)&&Sugar.Date.isFuture(futureDate)){return futureDate;}
+        return null;
+      }
+      const parsedDate=Sugar.Date.create(input,{from:now});
+      if(Sugar.Date.isValid(parsedDate)&&Sugar.Date.isFuture(parsedDate)){return parsedDate;}
+      return null;
+    }
+    function modifyDeadline(taskId,isMandatory){
+      const task=tasks.find(t=>t.id===taskId);
+      if(!task)return false;
+      const baseDate=task.modifiedDate?new Date(task.modifiedDate):new Date(task.createdDate);
+      let newTargetDate=null;
+      if(isMandatory){
+        while(true){
+          const dateInput=prompt(`Set a new deadline for "${task.name}" (e.g. tomorrow, next Monday, in 3 hours):`);
+          if(dateInput===null){return false;}
+          const parsedDate=parseDateExpression(dateInput,baseDate);
+          if(parsedDate){newTargetDate=parsedDate;task.targetDate=newTargetDate;task.modifiedDate=new Date();break;}else{alert("Please provide a valid future date.");}
         }
-
-        function editComment(e, taskId, commentId) {
-            if (e.target.tagName.toLowerCase() === 'a') {
-              // The user clicked an actual link, so let the link open and do NOT edit.
-              return;
-            }
-            const task = tasks.find(function(t) {
-                return t.id === taskId;
-            });
-            if (task) {
-                const comment = task.comments.find(function(c) {
-                    return c.id === commentId;
-                });
-                if (comment) {
-                    const newText = prompt("Edit the comment:", comment.text);
-                    if (newText !== null && newText.trim() !== "") {
-                        comment.text = newText.trim();
-                        comment.date = Sugar.Date.format(new Date(), '%d/%m/%Y %H:%M:%S');
-                        task.modifiedDate = new Date();
-                        saveAndRenderTasks();
-                    }
-                }
-            }
-        }
-
-        function confirmDelete(taskId) {
-            if (confirm("Are you sure you want to delete this task? All its sub-tasks will also be deleted.")) {
-                deleteTask(taskId);
-            }
-        }
-
-        function deleteTask(taskId) {
-            // Recursively delete a task and its sub-tasks
-            const deleteRecursively = function(id) {
-                const subTasks = tasks.filter(function(t) {
-                    return t.parentId === id;
-                });
-                subTasks.forEach(function(subTask) {
-                    deleteRecursively(subTask.id);
-                });
-                tasks = tasks.filter(function(t) {
-                    return t.id !== id;
-                });
-            };
-            deleteRecursively(taskId);
-            saveAndRenderTasks();
-        }
-
-        function convertCommentToTask(taskId, commentId) {
-            const parentTask = tasks.find(function(t) {
-                return t.id === taskId;
-            });
-            if (!parentTask) return;
-            const comment = parentTask.comments.find(function(c) {
-                return c.id === commentId;
-            });
-            if (!comment) return;
-
-            const newTask = {
-                id: taskIdCounter++,
-                name: comment.text,
-                description: "",
-                comments: [],
-                status: "inbox",
-                createdDate: new Date(),
-                modifiedDate: new Date(),
-                collapsed: true,
-                targetDate: null,
-                parentId: parentTask.id,
-                order: getMaxOrder('inbox') + 1
-            };
-            tasks.push(newTask);
-
-            parentTask.comments = parentTask.comments.filter(function(c) {
-                return c.id !== commentId;
-            });
-            parentTask.modifiedDate = new Date();
-
-            saveAndRenderTasks();
-        }
-
-        function getParentChain(task) {
-            let chain = [];
-            let currentTask = task;
-            while (currentTask.parentId !== null) {
-                const parentTask = tasks.find(function(t) {
-                    return t.id === currentTask.parentId;
-                });
-                if (parentTask) {
-                    chain.unshift(parentTask.name);
-                    currentTask = parentTask;
-                } else {
-                    break;
-                }
-            }
-            return chain;
-        }
-
-        function deleteComment(taskId, commentId) {
-            if (!confirm("Are you sure you want to delete this comment?")) {
-                return;
-            }
-            const task = tasks.find(function(t) {
-                return t.id === taskId;
-            });
-            if (task) {
-                const comment = task.comments.find(c => c.id === commentId);
-                if (comment && comment.type === 'rationale') {
-                    alert("You cannot delete a rationale.");
-                    return;
-                }
-                task.comments = task.comments.filter(function(c) {
-                    return c.id !== commentId;
-                });
-                task.modifiedDate = new Date();
-                saveAndRenderTasks();
-            }
-        }
-
-        // Save comment input in localStorage
-        function saveCommentInput(taskId, value) {
-            localStorage.setItem('commentInput-' + taskId, value);
-        }
-
-        function getSavedCommentInput(taskId) {
-            return localStorage.getItem('commentInput-' + taskId) || '';
-        }
-
-        function removeSavedCommentInput(taskId) {
-            localStorage.removeItem('commentInput-' + taskId);
-        }
-
-        function resetInterface() {
-            if (confirm("Are you sure you want to reset the interface? All tasks will be deleted.")) {
-                tasks = [];
-                taskIdCounter = 0;
-                localStorage.removeItem('tasks');
-                localStorage.removeItem('taskForm');
-                Object.keys(localStorage).forEach(function(key) {
-                    if (key.startsWith('commentInput-')) {
-                        localStorage.removeItem(key);
-                    }
-                });
-                saveAndRenderTasks();
-            }
-        }
-
-        function exportData() {
-            const data = JSON.stringify(tasks, null, 2);
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'tasks.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedTasks = JSON.parse(e.target.result);
-                    if (Array.isArray(importedTasks)) {
-                        tasks = importedTasks.map(function(task) {
-                            return Object.assign({}, task, {
-                                order: task.status === 'inbox'
-                                    ? (task.order || getMaxOrder('inbox') + 1)
-                                    : undefined
-                            });
-                        });
-                        const maxId = tasks.reduce(function(max, task) {
-                            return task.id > max ? task.id : max;
-                        }, 0);
-                        taskIdCounter = maxId + 1;
-                        saveAndRenderTasks();
-                        alert("Data imported successfully!");
-                    } else {
-                        alert("The imported file is not valid.");
-                    }
-                } catch (error) {
-                    alert("Error importing data.");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function initializeWorker() {
-            const workerCode = `
-                // Inlined Sugar.js functionality for date handling
-                function createDate(input) {
-                    return new Date(input);
-                }
-
-                function isBeforeOrSame(date1, date2) {
-                    return date1.getTime() <= date2.getTime();
-                }
-
-                // Worker logic starts here
-                self.onmessage = function(event) {
-                    if (event.data.action === 'updateTasks') {
-                        const tasks = event.data.tasks;
-                        monitorTasks(tasks);
-                    }
-                };
-
-                function monitorTasks(tasks) {
-                    setInterval(function() {
-                        const now = new Date();
-                        let updated = false;
-                        tasks.forEach(function(task) {
-                            if ((task.status === 'delay' || task.status === 'await') && task.targetDate) {
-                                const targetDate = createDate(task.targetDate);
-                                if (isBeforeOrSame(targetDate, now)) {
-                                    task.status = 'inbox';
-                                    task.modifiedDate = new Date();
-                                    task.order = getMaxOrder(tasks, 'inbox') + 1;
-                                    task.targetDate = null;
-                                    updated = true;
-                                }
-                            }
-                        });
-                        if (updated) {
-                            postMessage({ action: 'refreshTasks', tasks: tasks });
-                        }
-                    }, 1000);
-                }
-
-                function getMaxOrder(tasks, status) {
-                    const filtered = tasks.filter(function(task) {
-                        return task.status === status;
-                    });
-                    if (filtered.length === 0) return 0;
-                    return Math.max.apply(null, filtered.map(function(task) {
-                        return task.order || 0;
-                    }));
-                }
-            `;
-
-            const blob = new Blob([workerCode], { type: 'application/javascript' });
-            const workerURL = URL.createObjectURL(blob);
-            worker = new Worker(workerURL);
-
-            worker.onmessage = function(event) {
-                if (event.data.action === 'refreshTasks') {
-                    tasks = event.data.tasks;
-                    saveAndRenderTasks();
-                }
-            };
-
-            worker.postMessage({ action: 'updateTasks', tasks: tasks });
-        }
-
-        function initializeSortable() {
-            const taskList = document.getElementById('task-list');
-            Sortable.create(taskList, {
-                animation: 150,
-                handle: '.drag-handle',
-                onEnd: function (evt) {
-                    const itemEl = evt.item;
-                    const movedTaskId = parseInt(itemEl.getAttribute('data-task-id'));
-                    const oldIndex = evt.oldIndex;
-                    const newIndex = evt.newIndex;
-
-                    let filteredTasks = tasks.filter(function(task) {
-                        return task.status === 'inbox';
-                    });
-                    const movedTask = filteredTasks.splice(oldIndex, 1)[0];
-                    filteredTasks.splice(newIndex, 0, movedTask);
-
-                    filteredTasks.forEach(function(task, index) {
-                        task.order = index + 1;
-                    });
-
-                    saveAndRenderTasks();
-                }
-            });
-        }
-
-        function toggleExportImport() {
-            const exportImportDiv = document.getElementById('export-import');
-            exportImportDiv.classList.toggle('collapsed');
-            const isCollapsed = exportImportDiv.classList.contains('collapsed');
-            localStorage.setItem('exportImportCollapsed', isCollapsed.toString());
-        }
-
-        function startCountdown() {
-            if (countdownInterval) clearInterval(countdownInterval);
-            countdownInterval = setInterval(updateCountdowns, 1000);
-        }
-
-        function updateCountdowns() {
-            tasks.forEach(function(task) {
-                if (task.status === 'delay') {
-                    const remaining = getRemainingTime(task.targetDate);
-                    const taskEl = document.querySelector('[data-task-id="' + task.id + '"]');
-                    if (taskEl) {
-                        const timerEl = taskEl.querySelector('.timer');
-                        if (timerEl) {
-                            if (remaining > 0) {
-                                timerEl.innerHTML = '<i class="fas fa-clock"></i> ' + formatTime(remaining);
-                            } else {
-                                timerEl.innerHTML = '<i class="fas fa-clock"></i> 00:00:00';
-                            }
-                        }
-                    }
-                }
-                else if (task.status === 'await') {
-                    // If there's no targetDate, do not display the timer
-                    if (!task.targetDate) {
-                        const taskEl = document.querySelector('[data-task-id="' + task.id + '"]');
-                        if (taskEl) {
-                            const timerEl = taskEl.querySelector('.timer');
-                            if (timerEl) {
-                                timerEl.innerHTML = "";
-                            }
-                        }
-                    } else {
-                        const remaining = getRemainingTime(task.targetDate);
-                        const taskEl = document.querySelector('[data-task-id="' + task.id + '"]');
-                        if (taskEl) {
-                            const timerEl = taskEl.querySelector('.timer');
-                            if (timerEl) {
-                                if (remaining > 0) {
-                                    timerEl.innerHTML = '<i class="fas fa-clock"></i> ' + formatTime(remaining);
-                                } else {
-                                    timerEl.innerHTML = '<i class="fas fa-clock"></i> 00:00:00';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function getRemainingTime(targetDate) {
-            const now = new Date();
-            const target = Sugar.Date.create(targetDate);
-            return target - now > 0 ? target - now : 0;
-        }
-
-        function formatTime(ms) {
-            const totalSeconds = Math.floor(ms / 1000);
-            const days = Math.floor(totalSeconds / 86400);
-            const hours = Math.floor((totalSeconds % 86400) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-
-            let parts = [];
-
-            if (days > 0) {
-                parts.push(days + 'd');
-                if (hours > 0) parts.push(hours + 'h');
-            } else if (hours > 0) {
-                parts.push(hours + 'h');
-                if (minutes > 0) parts.push(minutes + 'm');
-            } else if (minutes > 0) {
-                parts.push(minutes + 'm');
-                if (seconds > 0) parts.push(seconds + 's');
-            } else {
-                parts.push(seconds + 's');
-            }
-
-            return parts.join(' ');
-        }
-
-        // Set the locale to English for Sugar.js date parsing
-        Sugar.Date.setLocale('en');
-
-        // Function to parse custom date expressions in English
-        function parseDateExpression(input, baseDate) {
-            input = input.toLowerCase().trim();
-            const now = baseDate || new Date();
-
-            // Handle quick keywords like "tomorrow"
-            if (input === "tomorrow") {
-                return Sugar.Date.advance(now, { days: 1 });
-            } else if (
-                input === "day after tomorrow"
-            ) {
-                return Sugar.Date.advance(now, { days: 2 });
-            }
-
-            // Handle expressions like "in 3 hours", "in 2 minutes"
-            const matchRelativeTime = input.match(/in\\s+(\\d+)\\s+(minutes?|hours?|days?|seconds?)/);
-            if (matchRelativeTime) {
-                const value = parseInt(matchRelativeTime[1], 10);
-                const unit = matchRelativeTime[2];
-
-                let futureDate;
-                switch (unit) {
-                    case 'minute':
-                    case 'minutes':
-                        futureDate = Sugar.Date.advance(now, { minutes: value });
-                        break;
-                    case 'hour':
-                    case 'hours':
-                        futureDate = Sugar.Date.advance(now, { hours: value });
-                        break;
-                    case 'day':
-                    case 'days':
-                        futureDate = Sugar.Date.advance(now, { days: value });
-                        break;
-                    case 'second':
-                    case 'seconds':
-                        futureDate = Sugar.Date.advance(now, { seconds: value });
-                        break;
-                }
-
-                if (Sugar.Date.isValid(futureDate) && Sugar.Date.isFuture(futureDate)) {
-                    return futureDate;
-                }
-                return null;
-            }
-
-            // Try parsing standard expressions like "next Monday"
-            const parsedDate = Sugar.Date.create(input, { from: now });
-
-            if (Sugar.Date.isValid(parsedDate) && Sugar.Date.isFuture(parsedDate)) {
-                return parsedDate;
-            }
-
-            return null;
-        }
-
-        // Function to modify a task's deadline (e.g. in "delay" or "await")
-        function modifyDeadline(taskId, isMandatory) {
-            const task = tasks.find(t => t.id === taskId);
-            if (!task) return false;
-        
-            const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
-            let newTargetDate = null;
-        
-            if (isMandatory) {
-                // Must choose a valid date, or cancel leads to no change
-                while (true) {
-                    const dateInput = prompt(
-                      `Set a new deadline for "${task.name}" (e.g. tomorrow, next Monday, in 3 hours):`
-                    );
-                    if (dateInput === null) {
-                        // User canceled => do not set status, return false
-                        return false;
-                    }
-                    const parsedDate = parseDateExpression(dateInput, baseDate);
-                    if (parsedDate) {
-                        newTargetDate = parsedDate;
-                        task.targetDate = newTargetDate;
-                        task.modifiedDate = new Date();
-                        break;
-                    } else {
-                        alert("Please provide a valid future date.");
-                    }
-                }
-            } else {
-                // Optional deadline
-                const dateInput = prompt(
-                  `Set a new deadline for "${task.name}" (optional). Leave blank or click Cancel to skip:`
-                );
-                if (dateInput === null || dateInput.trim() === "") {
-                    // No date => skip
-                    task.targetDate = null;
-                } else {
-                    const parsedDate = parseDateExpression(dateInput, baseDate);
-                    if (parsedDate) {
-                        newTargetDate = parsedDate;
-                        task.targetDate = newTargetDate;
-                        task.modifiedDate = new Date();
-                    } else {
-                        alert("Invalid date. No deadline will be set.");
-                        task.targetDate = null;
-                    }
-                }
-            }
-        
-            saveAndRenderTasks();
-            return true;
-        }
-
-        // Provide a stub for the "forkApplication" button (if needed)
-        function forkApplication() {
-            alert("Fork functionality is not implemented in this version.");
-        }
-        
-        function addCommentFromButton(taskId) {
-            // On récupère la zone de saisie
-            const inputEl = document.getElementById('comment-input-' + taskId);
-            if (!inputEl) return;
-        
-            const commentText = inputEl.value.trim();
-            if (commentText) {
-                // Même logique que lorsqu'on appuie sur Enter
-                addCommentToTask(taskId, commentText);
-                inputEl.value = '';
-                removeSavedCommentInput(taskId); 
-                saveAndRenderTasks();
-            }
-        }
-        
-        function addRationaleToTask(taskId, rationaleText) {
-           const task = tasks.find(t => t.id === taskId);
-           if (task) {
-               rationaleText = formatText(rationaleText);
-               task.comments.push({
-                   id: Date.now(),
-                   text: rationaleText,
-                   date: Sugar.Date.format(new Date(), '%d/%m/%Y %H:%M:%S'),
-                   type: 'rationale'
-               });
-               task.modifiedDate = new Date();
-           }
-        }
-
-        function formatText(text) {
-            text = text.trim(); 
-            if (text.length > 0) {
-                text = text.charAt(0).toUpperCase() + text.slice(1);
-                if (!text.endsWith('.')) {
-                    text += '.';
-                }
-            }
-            return text;
-        }
-        function updateTabCounts() {
-            const statuses = ['inbox', 'delay', 'await'];
-            statuses.forEach(function(status) {
-                const count = tasks.filter(task => task.status === status).length;
-                const countEl = document.getElementById('count-' + status);
-                if (countEl) countEl.textContent = count;
-            });
-        }
-        
-        function renderTextWithLinks(text) {
-          if (!text) return "";
-          
-          // Step A: escape text (to avoid malicious scripts, etc.)
-          const escaped = text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-        
-          // Step B: turn URLs into clickable links
-          // Matches: http:// or https:// or www.  + "anything non-whitespace"
-          const urlRegex = /((https?:\/\/|www\.)[^\s]+)/gi;
-        
-          const linked = escaped.replace(urlRegex, function (url) {
-            let href = url;
-            return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-          });
-        
-          return linked;
-        }
-    </script>
+      }else{
+        const dateInput=prompt(`Set a new deadline for "${task.name}" (optional). Leave blank or click Cancel to skip:`);
+        if(dateInput===null||dateInput.trim()===""){task.targetDate=null;}else{const parsedDate=parseDateExpression(dateInput,baseDate);if(parsedDate){newTargetDate=parsedDate;task.targetDate=newTargetDate;task.modifiedDate=new Date();}else{alert("Invalid date. No deadline will be set.");task.targetDate=null;}}
+      }
+      saveAndRenderTasks();
+      return true;
+    }
+    function addCommentFromButton(taskId){
+      const inputEl=document.getElementById('comment-input-'+taskId);
+      if(!inputEl)return;
+      const commentText=inputEl.value.trim();
+      if(commentText){
+        addCommentToTask(taskId,commentText);
+        inputEl.value='';
+        removeSavedCommentInput(taskId);
+        saveAndRenderTasks();
+      }
+    }
+    function addRationaleToTask(taskId,rationaleText){
+      const task=tasks.find(t=>t.id===taskId);
+      if(task){
+        rationaleText=formatText(rationaleText);
+        task.comments.push({id:Date.now(),text:rationaleText,date:Sugar.Date.format(new Date(),'%d/%m/%Y %H:%M:%S'),type:'rationale'});
+        task.modifiedDate=new Date();
+      }
+    }
+    function formatText(text){
+      text=text.trim();
+      if(text.length>0){text=text.charAt(0).toUpperCase()+text.slice(1);if(!text.endsWith('.')){text+='.';}}
+      return text;
+    }
+    function updateTabCounts(){
+      ['inbox','delay','await'].forEach(function(status){
+        const count=tasks.filter(task=>task.status===status).length;
+        const countEl=document.getElementById('count-'+status);
+        if(countEl)countEl.textContent=count;
+      });
+    }
+    function renderTextWithLinks(text){
+      if(!text)return "";
+      const escaped=text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+      const urlRegex=/((https?:\/\/|www\.)[^\s]+)/gi;
+      const linked=escaped.replace(urlRegex,function(url){
+        let href=url;
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+      });
+      return linked;
+    }
+    document.addEventListener('click', function(e) {
+      const hamburgerMenu = document.querySelector('.hamburger-menu');
+      const exportImport = document.getElementById('export-import');
+      if (!hamburgerMenu.contains(e.target)) {
+        exportImport.classList.remove('show');
+      }
+    });
+  </script>
 </body>
 </html>
