@@ -291,11 +291,11 @@
     </form>
 
     <div id="tabs">
-        <button onclick="changeTab('inbox')" class="active">Inbox</button>
+        <button onclick="changeTab('inbox')" class="active">Inbox (<span class="badge" id="count-inbox">0</span>)</button>
         <button onclick="changeTab('done')">Done</button>
         <button onclick="changeTab('cancel')">Cancel</button>
-        <button onclick="changeTab('delay')">Delay</button>
-        <button onclick="changeTab('await')">Await</button>
+        <button onclick="changeTab('delay')">Delay (<span class="badge" id="count-delay">0</span>)</button>
+        <button onclick="changeTab('await')">Await (<span class="badge" id="count-await">0</span>)</button>
         <button onclick="changeTab('doc')">Doc</button>
     </div>
 
@@ -421,6 +421,7 @@
         }
 
         function renderTasks() {
+            updateTabCounts();
             const taskList = document.getElementById('task-list');
             taskList.innerHTML = '';
 
@@ -1240,7 +1241,14 @@
             }
             return text;
         }
-
+        function updateTabCounts() {
+            const statuses = ['inbox', 'delay', 'await'];
+            statuses.forEach(function(status) {
+                const count = tasks.filter(task => task.status === status).length;
+                const countEl = document.getElementById('count-' + status);
+                if (countEl) countEl.textContent = count;
+            });
+        }
     </script>
 </body>
 </html>
