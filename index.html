@@ -388,6 +388,10 @@
         const task={id:taskIdCounter++,name:name,description:description,comments:[],status:"inbox",createdDate:now,modifiedDate:now,collapsed:true,targetDate:null,parentId:null,order:getMaxOrder('inbox')+1};
         tasks.push(task);
         saveAndRenderTasks();
+        if (document.getElementById('search-input').value.trim() !== "") {
+          updateAllTabsForSearch();
+          performSearch();
+        }
         document.getElementById('new-task-name').value='';
         document.getElementById('new-task-description').value='';
         localStorage.removeItem('taskForm');
