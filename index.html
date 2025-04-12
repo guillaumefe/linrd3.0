@@ -455,7 +455,7 @@
         </div>
         <div class="comments" id="comments-${task.id}">
           <div style="display: flex; align-items: center; gap: 5px;">
-            <textarea id="comment-input-${task.id}" class="comment_input" type="text" placeholder="Add a comment that could become a subtask if you wish later on" oninput="saveCommentInput(${task.id}, this.value)" value="${renderTextWithLinks(getSavedCommentInput(task.id))}"></textarea>
+            <textarea id="comment-input-${task.id}" class="comment_input" type="text" placeholder="Add a comment or the next action to do" oninput="saveCommentInput(${task.id}, this.value)" value="${renderTextWithLinks(getSavedCommentInput(task.id))}"></textarea>
             <button onclick="addCommentFromButton(${task.id})">Add</button>
           </div>
           <hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">
