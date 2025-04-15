@@ -511,11 +511,9 @@
         });
 
         saveAndRenderTasks();
-
         updateSortMenuDisplay();
         const sortMenu = document.getElementById('sort-order-menu');
         sortMenu.value = 'desc';
-      
       }
     }
     function exportData(){
@@ -895,24 +893,18 @@
     });
     function updateSortMenuDisplay(){
       const sortMenu = document.getElementById('sort-order-menu');
-      const customSortKey = 'customSort-' + currentTab;
-      const customOptionText = "Custom Sort";
+      const customOption = sortMenu.querySelector('option[value="custom"]');
       
-      // Supprimez toute option "custom" existante
-      let existingCustomOption = sortMenu.querySelector('option[value="custom"]');
-      if(existingCustomOption) {
-        existingCustomOption.remove();
-      }
-      
-      // Si un ordre personnalisé a déjà été défini (la clé existe dans localStorage),
-      // recréez l'option de façon asynchrone afin de forcer le navigateur à l'afficher immédiatement
-      if(localStorage.getItem(customSortKey) !== null) {
-        setTimeout(() => {
-          // Vous pouvez utiliser insertAdjacentHTML pour insérer l'option
-          sortMenu.insertAdjacentHTML('beforeend', `<option value="custom">${customOptionText}</option>`);
-          // Optionnel : déclencher un événement "change" pour rafraîchir l'affichage
-          sortMenu.dispatchEvent(new Event('change'));
-        }, 0);
+      // Si aucun ordre custom n'a jamais été défini (la clé n'existe pas dans localStorage)
+      // on masque l'option "Custom Sort" en utilisant l'attribut hidden.
+      if(localStorage.getItem('customSort-' + currentTab) === null){
+        if (customOption) {
+          customOption.hidden = true;
+        }
+      } else {
+        if (customOption) {
+          customOption.hidden = false;
+        }
       }
     }
   </script>
