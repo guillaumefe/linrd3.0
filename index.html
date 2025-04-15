@@ -850,6 +850,9 @@
       }
       sortMenu.addEventListener('change', function(e) {
         currentSortOrder = e.target.value;
+        if (currentSortOrder !== 'custom') {
+          localStorage.removeItem('customSort-' + currentTab);
+        }
         localStorage.setItem('sortOrder', currentSortOrder);
         renderTasks();
       });
