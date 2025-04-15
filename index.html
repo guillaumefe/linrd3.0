@@ -735,7 +735,8 @@
     function modifyDeadline(taskId, isMandatory){
       const task = tasks.find(t => t.id === taskId);
       if(!task) return false;
-      const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
+      //const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
+      const baseDate = new Date();
       let newTargetDate = null;
       if(isMandatory){
         while(true){
