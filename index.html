@@ -511,7 +511,11 @@
         });
 
         saveAndRenderTasks();
+
         updateSortMenuDisplay();
+        const sortMenu = document.getElementById('sort-order-menu');
+        sortMenu.value = 'desc';
+      
       }
     }
     function exportData(){
