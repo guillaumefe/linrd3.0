@@ -900,21 +900,15 @@
         existingCustomOption.remove();
       }
       
-      // Si la clé custom sort existe dans localStorage (même si sa valeur est "false"),
-      // cela signifie qu'un ordre personnalisé a été défini au moins une fois
+      // Si un ordre personnalisé a déjà été défini (la clé existe dans localStorage),
+      // recréez l'option de façon asynchrone afin de forcer le navigateur à l'afficher immédiatement
       if(localStorage.getItem(customSortKey) !== null) {
-        // Créez la nouvelle option "Custom Sort"
-        const customOption = document.createElement('option');
-        customOption.value = 'custom';
-        customOption.textContent = customOptionText;
-        sortMenu.appendChild(customOption);
-        
-        // Forcer le reflow du select pour être sûr que la mise à jour soit visible immédiatement
-        const currentDisplay = sortMenu.style.display;
-        sortMenu.style.display = 'none';
-        // Lecture d'une propriété (offsetHeight) pour forcer le reflow
-        sortMenu.offsetHeight;
-        sortMenu.style.display = currentDisplay;
+        setTimeout(() => {
+          // Vous pouvez utiliser insertAdjacentHTML pour insérer l'option
+          sortMenu.insertAdjacentHTML('beforeend', `<option value="custom">${customOptionText}</option>`);
+          // Optionnel : déclencher un événement "change" pour rafraîchir l'affichage
+          sortMenu.dispatchEvent(new Event('change'));
+        }, 0);
       }
     }
   </script>
