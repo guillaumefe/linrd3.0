@@ -128,6 +128,7 @@
     let undoStack = [];
     let redoStack = [];
     let maxUndo = parseInt(localStorage.getItem('maxUndo')) || 50;
+    let currentSortOrder = localStorage.getItem('sortOrder') || 'asc';
     window.addEventListener('load', function(){
       const savedTab = localStorage.getItem('currentTab');
       if(savedTab){ currentTab = savedTab; } else { currentTab = 'inbox'; }
@@ -230,7 +231,6 @@
       const taskList = document.getElementById('task-list');
       taskList.innerHTML = '';
       let filteredTasks = tasks.filter(function(task){ return task.status === currentTab; });
-      let currentSortOrder = localStorage.getItem('sortOrder') || 'asc';
       filteredTasks.sort(function(a, b){
         const aOrder = (a.order !== undefined) ? a.order : new Date(a.createdDate).getTime();
         const bOrder = (b.order !== undefined) ? b.order : new Date(b.createdDate).getTime();
@@ -537,18 +537,26 @@
     }
     function initializeSortable(){
       const taskList = document.getElementById('task-list');
-      Sortable.create(taskList, { animation: 150, handle: '.drag-handle', onEnd: function(evt){
-        const itemEl = evt.item;
-        const movedTaskId = parseInt(itemEl.getAttribute('data-task-id'));
-        const oldIndex = evt.oldIndex;
-        const newIndex = evt.newIndex;
-        let filteredTasks = tasks.filter(function(task){ return task.status === 'inbox'; });
-        const movedTask = filteredTasks.splice(oldIndex, 1)[0];
-        filteredTasks.splice(newIndex, 0, movedTask);
-        filteredTasks.forEach(function(task, index){ task.order = index + 1; });
-        pushUndoState();
-        saveAndRenderTasks();
-      }});
+      Sortable.create(taskList, { 
+        animation: 150, 
+        handle: '.drag-handle', 
+        onEnd: function(evt){
+          // Récupère l’ordre des tâches tel qu'affiché dans le DOM
+          const newOrderIds = Array.from(taskList.children)
+                                   .map(el => parseInt(el.getAttribute('data-task-id')));
+          
+          // Met à jour l'ordre des tâches globales en fonction de l’ordre affiché
+          let count = 1;
+          newOrderIds.forEach(id => {
+            const task = tasks.find(t => t.id === id);
+            if(task) {
+              task.order = count++;
+            }
+          });
+          pushUndoState();
+          saveAndRenderTasks();
+        }
+      });
     }
     function toggleExportImport(){
       const exportImportDiv = document.getElementById('export-import');
