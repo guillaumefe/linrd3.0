@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/sugar.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lachrono@1.3.12/chrono.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background-color: #f4f4f9; padding-top: 50px; }
     header { background-color: #000; color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; }
@@ -695,42 +696,25 @@
       else { parts.push(seconds + 's'); }
       return parts.join(' ');
     }
-    Sugar.Date.setLocale('en');
-    function parseDateExpression(input, baseDate){
-      input = input.toLowerCase().trim();
-      const now = baseDate || new Date();
-      if(input === "tomorrow"){ return Sugar.Date.advance(now, { days: 1 }); }
-      else if(input === "day after tomorrow"){ return Sugar.Date.advance(now, { days: 2 }); }
-      const matchRelativeTime = input.match(/in\s+(\d+)\s+(minutes?|hours?|days?|seconds?)/);
-      if(matchRelativeTime){
-        const value = parseInt(matchRelativeTime[1], 10);
-        const unit = matchRelativeTime[2];
-        let futureDate;
-        switch(unit){
-          case 'minute':
-          case 'minutes':
-            futureDate = Sugar.Date.advance(now, { minutes: value });
-            break;
-          case 'hour':
-          case 'hours':
-            futureDate = Sugar.Date.advance(now, { hours: value });
-            break;
-          case 'day':
-          case 'days':
-            futureDate = Sugar.Date.advance(now, { days: value });
-            break;
-          case 'second':
-          case 'seconds':
-            futureDate = Sugar.Date.advance(now, { seconds: value });
-            break;
+    
+    function parseDateExpression(input, baseDate) {
+      const referenceDate = baseDate || new Date();
+    
+      try {
+        const results = chrono.parse(input, referenceDate); // ✅ chrono est global ici
+        if (results.length > 0) {
+          const parsedDate = results[0].start.date();
+          if (parsedDate > referenceDate) {
+            return parsedDate;
+          }
         }
-        if(Sugar.Date.isValid(futureDate) && Sugar.Date.isFuture(futureDate)){ return futureDate; }
-        return null;
+      } catch (e) {
+        console.error("Error parsing date:", e);
       }
-      const parsedDate = Sugar.Date.create(input, { from: now });
-      if(Sugar.Date.isValid(parsedDate) && Sugar.Date.isFuture(parsedDate)){ return parsedDate; }
+    
       return null;
     }
+    
     function modifyDeadline(taskId, isMandatory){
       const task = tasks.find(t => t.id === taskId);
       if(!task) return false;
