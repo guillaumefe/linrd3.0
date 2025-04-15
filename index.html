@@ -894,26 +894,20 @@
       const customSortKey = 'customSort-' + currentTab;
       const customOptionText = "Custom Sort";
       
-      // Rechercher l'option "custom" existante
-      let customOption = sortMenu.querySelector('option[value="custom"]');
+      // Supprimez toute option "custom" existante
+      let existingCustomOption = sortMenu.querySelector('option[value="custom"]');
+      if(existingCustomOption) {
+        existingCustomOption.remove();
+      }
       
-      // Si aucun ordre personnalisé n'a jamais été défini (la clé n'existe pas dans localStorage)
-      if (localStorage.getItem(customSortKey) === null) {
-        // S'il existe, on le supprime (détruit)
-        if (customOption) {
-          customOption.remove();
-        }
-      } else {
-        // Si la clé existe, on s'assure que l'option est présente
-        if (!customOption) {
-          // Créer l'élément option "custom"
-          customOption = document.createElement('option');
-          customOption.value = 'custom';
-          customOption.textContent = customOptionText;
-          // Vous pouvez choisir la position d'insertion souhaitée ici.
-          // Par défaut, on l'ajoute à la fin du select.
-          sortMenu.appendChild(customOption);
-        }
+      // Si la clé existe dans localStorage (même si sa valeur est "false"),
+      // cela signifie qu'un ordre personnalisé a déjà été choisi
+      if (localStorage.getItem(customSortKey) !== null) {
+        // Créez et ajoutez la nouvelle option "Custom Sort"
+        const customOption = document.createElement('option');
+        customOption.value = 'custom';
+        customOption.text = customOptionText; // ou utilisez innerHTML / innerText
+        sortMenu.appendChild(customOption);
       }
     }
   </script>
