@@ -142,6 +142,11 @@
       }
       initializeWorker();
       startCountdown();
+      const savedSearch = localStorage.getItem('searchInput');
+      if(savedSearch){
+        document.getElementById('search-input').value = savedSearch;
+        performSearch();
+      }
     });
     document.getElementById('new-task-name').addEventListener('input', saveForm);
     document.getElementById('new-task-description').addEventListener('input', saveForm);
@@ -703,7 +708,9 @@
       if(!hamburgerMenu.contains(e.target)){ exportImport.classList.remove('show'); }
     });
     function performSearch(){
+      const searchInput = document.getElementById('search-input');
       const query = document.getElementById('search-input').value.trim().toLowerCase();
+      localStorage.setItem('searchInput', query); // Sauvegarde de la valeur
       if(!query){
         updateTabCounts();
         renderTasks();
