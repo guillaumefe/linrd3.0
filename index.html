@@ -501,7 +501,15 @@
         taskIdCounter = 0;
         localStorage.removeItem('tasks');
         localStorage.removeItem('taskForm');
-        Object.keys(localStorage).forEach(function(key){ if(key.startsWith('commentInput-')){ localStorage.removeItem(key); } });
+        localStorage.removeItem('sortOrder'); // Réinitialise également le sortOrder global
+    
+        // Parcours de toutes les clés de localStorage et suppression de celles liées aux custom sort et aux inputs de commentaires
+        Object.keys(localStorage).forEach(function(key){
+          if(key.startsWith('customSort-') || key.startsWith('customOrder-') || key.startsWith('commentInput-')){
+            localStorage.removeItem(key);
+          }
+        });
+    
         saveAndRenderTasks();
       }
     }
