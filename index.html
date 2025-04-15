@@ -129,7 +129,7 @@
     let undoStack = [];
     let redoStack = [];
     let maxUndo = parseInt(localStorage.getItem('maxUndo')) || 50;
-    let currentSortOrder = localStorage.getItem('sortOrder') || 'asc';
+    let currentSortOrder = localStorage.getItem('sortOrder') || 'desc';
     window.addEventListener('load', function(){
       const savedTab = localStorage.getItem('currentTab');
       if(savedTab){ currentTab = savedTab; } else { currentTab = 'inbox'; }
@@ -232,17 +232,16 @@
       const taskList = document.getElementById('task-list');
       taskList.innerHTML = '';
       let filteredTasks = tasks.filter(function(task){ return task.status === currentTab; });
-      // Check if a custom sort has been set for the current tab
-      const isCustom = localStorage.getItem('customSort-' + currentTab);
+      
+      const isCustom = localStorage.getItem('customSort-' + currentTab) === 'true';
+      
       if(isCustom) {
-        // If custom, sort strictly by task.order (ascending)
         filteredTasks.sort((a, b) => a.order - b.order);
       } else {
-        // Otherwise, use the currentSortOrder (asc or desc based on createdDate or default order)
         filteredTasks.sort(function(a, b){
-          const aOrder = (a.order !== undefined) ? a.order : new Date(a.createdDate).getTime();
-          const bOrder = (b.order !== undefined) ? b.order : new Date(b.createdDate).getTime();
-          return currentSortOrder === 'asc' ? aOrder - bOrder : bOrder - aOrder;
+          return currentSortOrder === 'asc'
+            ? new Date(a.createdDate) - new Date(b.createdDate)
+            : new Date(b.createdDate) - new Date(a.createdDate);
         });
       }
       filteredTasks.forEach(function(task){
