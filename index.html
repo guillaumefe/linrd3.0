@@ -223,11 +223,10 @@
       const taskList = document.getElementById('task-list');
       taskList.innerHTML = '';
       let filteredTasks = tasks.filter(function(task){ return task.status === currentTab; });
-      if(currentTab === 'inbox'){
-        filteredTasks.sort(function(a,b){ return new Date(b.createdDate) - new Date(a.createdDate); });
-      } else {
-        filteredTasks.sort(function(a,b){ return new Date(b.modifiedDate) - new Date(a.modifiedDate); });
-      }
+      let currentSortOrder = localStorage.getItem('sortOrder') || 'asc'; // 'asc' pour Oldest to Newest, 'desc' pour Newest to Oldest
+      filteredTasks.sort(function(a, b){
+        return currentSortOrder === 'asc' ? a.order - b.order : b.order - a.order;
+      });
       filteredTasks.forEach(function(task){
         const taskEl = document.createElement('div');
         taskEl.className = 'task ' + (task.collapsed ? 'collapsed' : '');
@@ -270,9 +269,7 @@
         </div>`;
         taskList.appendChild(taskEl);
       });
-      if(currentTab === 'inbox'){
-        initializeSortable();
-      }
+      initializeSortable();
     }
     function renderActionButton(task, action){
       if(task.status === action){ return ''; }
