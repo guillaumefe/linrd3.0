@@ -204,9 +204,15 @@
     });
     function saveAndRenderTasks(){
       localStorage.setItem('tasks', JSON.stringify(tasks));
-      renderTasks();
+      const searchQuery = document.getElementById('search-input').value.trim();
+      if(searchQuery !== ""){
+        performSearch();
+      } else {
+        renderTasks();
+      }
       if(worker){ worker.postMessage({action:'updateTasks', tasks: tasks}); }
     }
+
     function renderTasks(){
       updateTabCounts();
       const taskList = document.getElementById('task-list');
