@@ -841,10 +841,15 @@
      }
     document.addEventListener('DOMContentLoaded', function(){
       const sortMenu = document.getElementById('sort-order-menu');
-      if (!localStorage.getItem('customSort-' + currentTab)) {
-        const customOption = sortMenu.querySelector('option[value="custom"]');
+      const customFlag = localStorage.getItem('customSort-' + currentTab);
+      const customOption = sortMenu.querySelector('option[value="custom"]');
+      if (customFlag === 'true') {
         if (customOption) {
-          customOption.remove();
+          customOption.style.display = '';  // Show the custom option
+        }
+      } else {
+        if (customOption) {
+          customOption.style.display = 'none'; // Hide the custom option
         }
       }
       if(localStorage.getItem('customSort-' + currentTab) === 'true') {
