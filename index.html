@@ -566,6 +566,7 @@
           });
           
           localStorage.setItem('customOrder-' + currentTab, JSON.stringify(newOrderIds));
+          localStorage.setItem('customSort-' + currentTab, 'true');
           
           document.getElementById('sort-order-menu').value = 'custom';
           
