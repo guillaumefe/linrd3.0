@@ -509,8 +509,9 @@
             localStorage.removeItem(key);
           }
         });
-        customOption.style.display = 'none';
+
         saveAndRenderTasks();
+        updateSortMenuDisplay();
       }
     }
     function exportData(){
@@ -848,18 +849,7 @@
        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
      }
     document.addEventListener('DOMContentLoaded', function(){
-      const sortMenu = document.getElementById('sort-order-menu');
-      const customOption = sortMenu.querySelector('option[value="custom"]');
-
-      if(localStorage.getItem('customSort-' + currentTab) === null) {
-        if(customOption) {
-          customOption.style.display = 'none';
-        }
-      } else {
-        if(customOption) {
-          customOption.style.display = '';
-        }
-      }
+      updateSortMenuDisplay()
       
       if(localStorage.getItem('customSort-' + currentTab) === 'true') {
         sortMenu.value = 'custom';
@@ -877,6 +867,22 @@
         renderTasks();
       });
     });
+    function updateSortMenuDisplay(){
+      const sortMenu = document.getElementById('sort-order-menu');
+      const customOption = sortMenu.querySelector('option[value="custom"]');
+      
+      // Si aucun ordre custom n'a jamais été défini (la clé n'existe pas),
+      // on masque l'option "Custom Sort".
+      if (localStorage.getItem('customSort-' + currentTab) === null) {
+        if (customOption) {
+          customOption.style.display = 'none';
+        }
+      } else {
+        if (customOption) {
+          customOption.style.display = '';  // Affiche l'option (valeur par défaut)
+        }
+      }
+    }
   </script>
 </body>
 </html>
