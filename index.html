@@ -234,17 +234,16 @@
       let filteredTasks = tasks.filter(task => task.status === currentTab);
       
       // Si le mode custom est sélectionné OU s'il existe une sauvegarde custom pour l'onglet courant
-      if(localStorage.getItem('sort-order-selected') === 'custom' ||
-         localStorage.getItem('customOrder-' + currentTab)) {
+      if(localStorage.getItem('customSort-' + currentTab) === 'true') {
         const savedOrder = JSON.parse(localStorage.getItem('customOrder-' + currentTab) || '[]');
-        // Trie les tâches en se basant sur l'ordre des IDs enregistrés
+        // Trie selon le custom order
         filteredTasks.sort((a, b) => {
           const idxA = savedOrder.indexOf(a.id);
           const idxB = savedOrder.indexOf(b.id);
           return idxA - idxB;
         });
       } else {
-        // Sinon, tri par date de création selon l'ordre (asc ou desc)
+        // Sinon, trie par date de création selon le currentSortOrder
         filteredTasks.sort((a, b) => currentSortOrder === 'asc'
           ? new Date(a.createdDate) - new Date(b.createdDate)
           : new Date(b.createdDate) - new Date(a.createdDate)
