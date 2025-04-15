@@ -900,14 +900,21 @@
         existingCustomOption.remove();
       }
       
-      // Si la clé existe dans localStorage (même si sa valeur est "false"),
-      // cela signifie qu'un ordre personnalisé a déjà été choisi
-      if (localStorage.getItem(customSortKey) !== null) {
-        // Créez et ajoutez la nouvelle option "Custom Sort"
+      // Si la clé custom sort existe dans localStorage (même si sa valeur est "false"),
+      // cela signifie qu'un ordre personnalisé a été défini au moins une fois
+      if(localStorage.getItem(customSortKey) !== null) {
+        // Créez la nouvelle option "Custom Sort"
         const customOption = document.createElement('option');
         customOption.value = 'custom';
-        customOption.text = customOptionText; // ou utilisez innerHTML / innerText
+        customOption.textContent = customOptionText;
         sortMenu.appendChild(customOption);
+        
+        // Forcer le reflow du select pour être sûr que la mise à jour soit visible immédiatement
+        const currentDisplay = sortMenu.style.display;
+        sortMenu.style.display = 'none';
+        // Lecture d'une propriété (offsetHeight) pour forcer le reflow
+        sortMenu.offsetHeight;
+        sortMenu.style.display = currentDisplay;
       }
     }
   </script>
