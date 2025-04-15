@@ -881,7 +881,12 @@
           localStorage.setItem('customSort-' + currentTab, 'true');
         }
         localStorage.setItem('sortOrder', currentSortOrder);
-        renderTasks();
+        const searchQuery = document.getElementById('search-input').value.trim();
+        if (searchQuery !== "") {
+          performSearch(); // Applique le filtre ET le tri
+        } else {
+          renderTasks();   // Affiche l'ensemble des tâches triées
+        }
       });
     });
     function updateSortMenuDisplay(){
