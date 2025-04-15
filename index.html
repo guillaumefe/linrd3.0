@@ -230,9 +230,11 @@
       const taskList = document.getElementById('task-list');
       taskList.innerHTML = '';
       let filteredTasks = tasks.filter(function(task){ return task.status === currentTab; });
-      let currentSortOrder = localStorage.getItem('sortOrder') || 'asc'; // 'asc' pour Oldest to Newest, 'desc' pour Newest to Oldest
+      let currentSortOrder = localStorage.getItem('sortOrder') || 'asc';
       filteredTasks.sort(function(a, b){
-        return currentSortOrder === 'asc' ? a.order - b.order : b.order - a.order;
+        const aOrder = (a.order !== undefined) ? a.order : new Date(a.createdDate).getTime();
+        const bOrder = (b.order !== undefined) ? b.order : new Date(b.createdDate).getTime();
+        return currentSortOrder === 'asc' ? aOrder - bOrder : bOrder - aOrder;
       });
       filteredTasks.forEach(function(task){
         const taskEl = document.createElement('div');
@@ -343,7 +345,6 @@
         const rationale = prompt(`Please add a rationale for "delay":`);
         if(rationale && rationale.trim() !== ""){ addRationaleToTask(taskId, rationale.trim()); } else { alert("A rationale is required."); return; }
         task.status = 'delay';
-        task.order = undefined;
         task.modifiedDate = new Date();
       }
       else if(actionType === 'await'){
@@ -352,21 +353,18 @@
         if(!rationale || rationale.trim() === ""){ rationale = "Task awaited by user."; }
         if(rationale && rationale.trim() !== ""){ addRationaleToTask(taskId, rationale.trim()); }
         task.status = 'await';
-        task.order = undefined;
         task.modifiedDate = new Date();
       }
       else if(actionType === 'done' || actionType === 'cancel' || actionType === 'doc'){
         const comment = prompt(`Please add a comment for "${actionType}" (leave empty to skip):`);
         if(comment && comment.trim() !== ""){ addCommentToTask(taskId, comment.trim()); }
         task.status = actionType;
-        task.order = undefined;
         task.modifiedDate = new Date();
       }
       else if(actionType === 'someday'){
         const agree = confirm(`This action is going to be sidelined, do you agree?`);
         if(!agree){ return; }
         task.status = 'someday';
-        task.order = undefined;
         task.modifiedDate = new Date();
       }
       else if(actionType === 'inbox'){
@@ -375,7 +373,6 @@
           task.targetDate = null;
         }
         task.status = 'inbox';
-        task.order = undefined;
         task.modifiedDate = new Date();
       }
       pushUndoState();
@@ -515,7 +512,7 @@
           if(Array.isArray(importedTasks)){
             pushUndoState();
             tasks = importedTasks.map(function(task){
-              return Object.assign({}, task, { order: task.status === 'inbox' ? (task.order || getMaxOrder('inbox') + 1) : undefined });
+              return Object.assign({}, task);
             });
             const maxId = tasks.reduce(function(max, task){ return task.id > max ? task.id : max; }, 0);
             taskIdCounter = maxId + 1;
