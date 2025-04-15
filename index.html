@@ -741,38 +741,54 @@
       const exportImport = document.getElementById('export-import');
       if(!hamburgerMenu.contains(e.target)){ exportImport.classList.remove('show'); }
     });
-    function performSearch(){
-      const searchInput = document.getElementById('search-input');
+
+    function performSearch() {
       const query = document.getElementById('search-input').value.trim().toLowerCase();
-      localStorage.setItem('searchInput', query); // Sauvegarde de la valeur
-      if(!query){
+      localStorage.setItem('searchInput', query); // Save the search input
+      if (!query) {
         updateTabCounts();
         renderTasks();
         return;
       }
+      
+      // Update tab counts for search
       updateAllTabsForSearch();
       const terms = query.split(/\s+/);
-      const currentTasks = tasks.filter(task => task.status === currentTab);
-      const results = currentTasks.filter(task => {
+      
+      // First, filter tasks based on the search query for the current tab
+      let results = tasks.filter(task => {
+        if (task.status !== currentTab) return false;
         const parentChainText = getParentChain(task).join(' ');
-        const combinedText = (parentChainText + ' ' + task.name + ' ' + (task.description || '') + ' ' + task.comments.map(c => c.text).join(' ')).toLowerCase();
+        const combinedText = (
+          parentChainText + ' ' +
+          task.name + ' ' +
+          (task.description || '') + ' ' +
+          task.comments.map(c => c.text).join(' ')
+        ).toLowerCase();
         return terms.some(term => combinedText.includes(term));
-      }).map(task => {
-        const parentChainText = getParentChain(task).join(' ');
-        const combinedText = (parentChainText + ' ' + task.name + ' ' + (task.description || '') + ' ' + task.comments.map(c => c.text).join(' ')).toLowerCase();
-        let score = 0;
-        terms.forEach(term => {
-          const regex = new RegExp(term, 'g');
-          score += (combinedText.match(regex) || []).length;
-        });
-        const orderedRegex = new RegExp(terms.map(escapeRegex).join(".*?"), "i");
-        if(orderedRegex.test(combinedText)){ score += 1000; }
-        task.relevance = score;
-        return task;
       });
-      results.sort((a, b) => b.relevance - a.relevance);
+      
+      // Now sort the filtered results according to the sort order
+      if (localStorage.getItem('customSort-' + currentTab) === 'true') {
+        // When using a custom sort order, sort by the order stored in localStorage
+        const savedOrder = JSON.parse(localStorage.getItem('customOrder-' + currentTab) || '[]');
+        results.sort((a, b) => {
+          const idxA = savedOrder.indexOf(a.id);
+          const idxB = savedOrder.indexOf(b.id);
+          return idxA - idxB;
+        });
+      } else {
+        // Otherwise, sort by createdDate in ascending or descending order
+        results.sort((a, b) => currentSortOrder === 'asc'
+          ? new Date(a.createdDate) - new Date(b.createdDate)
+          : new Date(b.createdDate) - new Date(a.createdDate)
+        );
+      }
+      
+      // Render the filtered and sorted results
       renderSearchResults(results);
     }
+    
     function renderSearchResults(results){
       const taskList = document.getElementById('task-list');
       taskList.innerHTML = '';
