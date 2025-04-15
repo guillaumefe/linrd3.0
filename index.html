@@ -224,7 +224,12 @@
       } else {
         renderTasks();
       }
-      if(worker){ worker.postMessage({action:'updateTasks', tasks: tasks}); }
+      if(worker) { 
+        worker.postMessage({ 
+          action: 'updateTasks', 
+          tasks: tasks.filter(t => t.status === 'delay' || t.status === 'await')
+        }); 
+      }
     }
 
     function renderTasks(){
@@ -550,14 +555,66 @@
       };
       reader.readAsText(file);
     }
-    function initializeWorker(){
-      const workerCode = `function createDate(input){return new Date(input);}function isBeforeOrSame(date1,date2){return date1.getTime()<=date2.getTime();}self.onmessage=function(event){if(event.data.action==='updateTasks'){const tasks=event.data.tasks;monitorTasks(tasks);}};function monitorTasks(tasks){setInterval(function(){const now=new Date();let updated=false;tasks.forEach(function(task){if((task.status==='delay'||task.status==='await')&&task.targetDate){const targetDate=createDate(task.targetDate);if(isBeforeOrSame(targetDate,now)){task.status='inbox';task.modifiedDate=new Date();task.order=getMaxOrder(tasks,'inbox')+1;task.targetDate=null;updated=true;}}});if(updated){postMessage({action:'refreshTasks',tasks:tasks});}},1000);}function getMaxOrder(tasks,status){const filtered=tasks.filter(function(task){return task.status===status;});if(filtered.length===0)return 0;return Math.max.apply(null,filtered.map(function(task){return task.order||0;}));}`;
+    function initializeWorker() {
+      const workerCode = `
+        function createDate(input) { return new Date(input); }
+        function isBeforeOrSame(date1, date2) { return date1.getTime() <= date2.getTime(); }
+    
+        self.onmessage = function(event) {
+          if (event.data.action === 'updateTasks') {
+            const tasks = event.data.tasks;
+            monitorTasks(tasks);
+          }
+        };
+    
+        function monitorTasks(tasks) {
+          setInterval(function() {
+            const now = new Date();
+            const taskIdsToInbox = [];
+            tasks.forEach(function(task) {
+              if ((task.status === 'delay' || task.status === 'await') && task.targetDate) {
+                const targetDate = createDate(task.targetDate);
+                if (isBeforeOrSame(targetDate, now)) {
+                  taskIdsToInbox.push(task.id);
+                }
+              }
+            });
+            if (taskIdsToInbox.length > 0) {
+              postMessage({ action: 'moveTasksToInbox', taskIds: taskIdsToInbox });
+            }
+          }, 1000);
+        }
+      `;
       const blob = new Blob([workerCode], { type: 'application/javascript' });
       const workerURL = URL.createObjectURL(blob);
       worker = new Worker(workerURL);
-      worker.onmessage = function(event){ if(event.data.action==='refreshTasks'){ tasks = event.data.tasks; saveAndRenderTasks(); } };
+      worker.onmessage = function(event) {
+        if (event.data.action === 'moveTasksToInbox') {
+          handleTasksReturnToInbox(event.data.taskIds);
+        }
+      };
       worker.postMessage({ action: 'updateTasks', tasks: tasks });
     }
+
+    function handleTasksReturnToInbox(taskIds) {
+      let hasChanges = false;
+      taskIds.forEach(taskId => {
+        const task = tasks.find(t => t.id === taskId);
+        if (task && (task.status === 'delay' || task.status === 'await')) {
+          task.status = 'inbox';
+          task.modifiedDate = new Date();
+          task.targetDate = null;
+          task.order = getMaxOrder('inbox') + 1;
+          addRationaleToTask(task.id, 'Task automatically moved to inbox after deadline.');
+          hasChanges = true;
+        }
+      });
+    
+      if (hasChanges) {
+        saveAndRenderTasks();
+      }
+    }
+
     function initializeSortable(){
       const taskList = document.getElementById('task-list');
       Sortable.create(taskList, { 
