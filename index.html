@@ -231,18 +231,24 @@
       updateTabCounts();
       const taskList = document.getElementById('task-list');
       taskList.innerHTML = '';
-      let filteredTasks = tasks.filter(function(task){ return task.status === currentTab; });
+      let filteredTasks = tasks.filter(task => task.status === currentTab);
       
-      const isCustom = localStorage.getItem('customSort-' + currentTab) === 'true';
-      
-      if(isCustom) {
-        filteredTasks.sort((a, b) => a.order - b.order);
-      } else {
-        filteredTasks.sort(function(a, b){
-          return currentSortOrder === 'asc'
-            ? new Date(a.createdDate) - new Date(b.createdDate)
-            : new Date(b.createdDate) - new Date(a.createdDate);
+      // Si le mode custom est sélectionné OU s'il existe une sauvegarde custom pour l'onglet courant
+      if(localStorage.getItem('sort-order-selected') === 'custom' ||
+         localStorage.getItem('customOrder-' + currentTab)) {
+        const savedOrder = JSON.parse(localStorage.getItem('customOrder-' + currentTab) || '[]');
+        // Trie les tâches en se basant sur l'ordre des IDs enregistrés
+        filteredTasks.sort((a, b) => {
+          const idxA = savedOrder.indexOf(a.id);
+          const idxB = savedOrder.indexOf(b.id);
+          return idxA - idxB;
         });
+      } else {
+        // Sinon, tri par date de création selon l'ordre (asc ou desc)
+        filteredTasks.sort((a, b) => currentSortOrder === 'asc'
+          ? new Date(a.createdDate) - new Date(b.createdDate)
+          : new Date(b.createdDate) - new Date(a.createdDate)
+        );
       }
       filteredTasks.forEach(function(task){
         const taskEl = document.createElement('div');
@@ -549,11 +555,9 @@
         animation: 150, 
         handle: '.drag-handle', 
         onEnd: function(evt){
-          // Get the order as displayed in the DOM
+          const taskList = document.getElementById('task-list');
           const newOrderIds = Array.from(taskList.children)
                                    .map(el => parseInt(el.getAttribute('data-task-id')));
-          
-          // Update the task.order property based on the DOM order
           let count = 1;
           newOrderIds.forEach(id => {
             const task = tasks.find(t => t.id === id);
@@ -561,10 +565,11 @@
               task.order = count++;
             }
           });
-          // Mark current tab as having a custom sort order
-          localStorage.setItem('customSort-' + currentTab, 'true');
-          // Update sort menu to show "Custom Sort"
+          
+          localStorage.setItem('customOrder-' + currentTab, JSON.stringify(newOrderIds));
+          
           document.getElementById('sort-order-menu').value = 'custom';
+          
           pushUndoState();
           saveAndRenderTasks();
         }
@@ -845,10 +850,6 @@
       }
       sortMenu.addEventListener('change', function(e) {
         currentSortOrder = e.target.value;
-        if(currentSortOrder !== 'custom'){
-          // User selected a sort order from the menu, so remove the custom flag
-          localStorage.removeItem('customSort-' + currentTab);
-        }
         localStorage.setItem('sortOrder', currentSortOrder);
         renderTasks();
       });
