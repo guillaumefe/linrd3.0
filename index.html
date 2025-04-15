@@ -871,15 +871,15 @@
       const sortMenu = document.getElementById('sort-order-menu');
       const customOption = sortMenu.querySelector('option[value="custom"]');
       
-      // Si aucun ordre custom n'a jamais été défini (la clé n'existe pas),
-      // on masque l'option "Custom Sort".
-      if (localStorage.getItem('customSort-' + currentTab) === null) {
+      // Si aucun ordre custom n'a jamais été défini (la clé n'existe pas dans localStorage)
+      // on masque l'option "Custom Sort" en utilisant l'attribut hidden.
+      if(localStorage.getItem('customSort-' + currentTab) === null){
         if (customOption) {
-          customOption.style.display = 'none';
+          customOption.hidden = true;
         }
       } else {
         if (customOption) {
-          customOption.style.display = '';  // Affiche l'option (valeur par défaut)
+          customOption.hidden = false;
         }
       }
     }
