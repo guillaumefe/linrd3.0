@@ -891,17 +891,28 @@
     });
     function updateSortMenuDisplay(){
       const sortMenu = document.getElementById('sort-order-menu');
-      const customOption = sortMenu.querySelector('option[value="custom"]');
+      const customSortKey = 'customSort-' + currentTab;
+      const customOptionText = "Custom Sort";
       
-      // Si aucun ordre custom n'a jamais été défini (la clé n'existe pas dans localStorage)
-      // on masque l'option "Custom Sort" en utilisant l'attribut hidden.
-      if(localStorage.getItem('customSort-' + currentTab) === null){
+      // Rechercher l'option "custom" existante
+      let customOption = sortMenu.querySelector('option[value="custom"]');
+      
+      // Si aucun ordre personnalisé n'a jamais été défini (la clé n'existe pas dans localStorage)
+      if (localStorage.getItem(customSortKey) === null) {
+        // S'il existe, on le supprime (détruit)
         if (customOption) {
-          customOption.hidden = true;
+          customOption.remove();
         }
       } else {
-        if (customOption) {
-          customOption.hidden = false;
+        // Si la clé existe, on s'assure que l'option est présente
+        if (!customOption) {
+          // Créer l'élément option "custom"
+          customOption = document.createElement('option');
+          customOption.value = 'custom';
+          customOption.textContent = customOptionText;
+          // Vous pouvez choisir la position d'insertion souhaitée ici.
+          // Par défaut, on l'ajoute à la fin du select.
+          sortMenu.appendChild(customOption);
         }
       }
     }
