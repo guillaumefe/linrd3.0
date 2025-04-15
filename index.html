@@ -866,6 +866,7 @@
      }
     document.addEventListener('DOMContentLoaded', function(){
       updateSortMenuDisplay()
+      const sortMenu = document.getElementById('sort-order-menu');
       
       if(localStorage.getItem('customSort-' + currentTab) === 'true') {
         sortMenu.value = 'custom';
