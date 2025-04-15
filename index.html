@@ -841,6 +841,12 @@
      }
     document.addEventListener('DOMContentLoaded', function(){
       const sortMenu = document.getElementById('sort-order-menu');
+      if (!localStorage.getItem('customSort-' + currentTab)) {
+        const customOption = sortMenu.querySelector('option[value="custom"]');
+        if (customOption) {
+          customOption.remove();
+        }
+      }
       if(localStorage.getItem('customSort-' + currentTab) === 'true') {
         sortMenu.value = 'custom';
       } else {
