@@ -233,17 +233,16 @@
       taskList.innerHTML = '';
       let filteredTasks = tasks.filter(task => task.status === currentTab);
       
-      // Si le mode custom est sélectionné OU s'il existe une sauvegarde custom pour l'onglet courant
       if(localStorage.getItem('customSort-' + currentTab) === 'true') {
         const savedOrder = JSON.parse(localStorage.getItem('customOrder-' + currentTab) || '[]');
-        // Trie selon le custom order
+        // Custom order
         filteredTasks.sort((a, b) => {
           const idxA = savedOrder.indexOf(a.id);
           const idxB = savedOrder.indexOf(b.id);
           return idxA - idxB;
         });
       } else {
-        // Sinon, trie par date de création selon le currentSortOrder
+        // CurrentSortOrder
         filteredTasks.sort((a, b) => currentSortOrder === 'asc'
           ? new Date(a.createdDate) - new Date(b.createdDate)
           : new Date(b.createdDate) - new Date(a.createdDate)
@@ -842,16 +841,17 @@
      }
     document.addEventListener('DOMContentLoaded', function(){
       const sortMenu = document.getElementById('sort-order-menu');
-      // Set the menu value based on the custom flag or global sort order:
-      if(localStorage.getItem('customSort-' + currentTab)) {
+      if(localStorage.getItem('customSort-' + currentTab) === 'true') {
         sortMenu.value = 'custom';
       } else {
-        sortMenu.value = currentSortOrder;
+        sortMenu.value = localStorage.getItem('sortOrder') || currentSortOrder;
       }
       sortMenu.addEventListener('change', function(e) {
         currentSortOrder = e.target.value;
         if (currentSortOrder !== 'custom') {
-          localStorage.removeItem('customSort-' + currentTab);
+          localStorage.setItem('customSort-' + currentTab, 'false');
+        } else {
+          localStorage.setItem('customSort-' + currentTab, 'true');
         }
         localStorage.setItem('sortOrder', currentSortOrder);
         renderTasks();
