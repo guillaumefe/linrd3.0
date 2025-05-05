@@ -299,7 +299,17 @@
         }
         taskEl.innerHTML = `<div style="display: flex; align-items: center;">
           <i class="fas fa-bars drag-handle"></i>
-          <h3 style="flex: 1;" onclick="editTaskName(event, ${task.id})">${renderTextWithLinks(fullTitle)}</h3>
+          ${
+            /* Choix du wrapper selon le statut Doc */
+            task.status === 'doc'
+              ? `<pre class="doc-title" onclick="editTaskName(event, ${task.id})"
+                  style="flex:1; white-space: pre-wrap; word-wrap: break-word;">
+                  ${renderTextWithLinks(fullTitle)}
+                </pre>`
+              : `<h3 style="flex: 1;" onclick="editTaskName(event, ${task.id})">
+                  ${renderTextWithLinks(fullTitle)}
+                </h3>`
+          }
           <span class="toggle-icon" onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'}</span>
         </div>
         ${timerHtml}
@@ -892,7 +902,16 @@
         }
         taskEl.innerHTML = `<div style="display: flex; align-items: center;">
           <i class="fas fa-bars drag-handle"></i>
-          <h3 style="flex: 1;" onclick="editTaskName(event, ${task.id})">${renderTextWithLinks(fullTitle)}</h3>
+          ${
+            task.status === 'doc'
+              ? `<pre class="doc-title" onclick="editTaskName(event, ${task.id})"
+                  style="white-space: pre-wrap; word-wrap: break-word;">
+                  ${renderTextWithLinks(fullTitle)}
+                </pre>`
+              : `<h3 style="flex: 1;" onclick="editTaskName(event, ${task.id})">
+                  ${renderTextWithLinks(fullTitle)}
+                </h3>`
+          }
           <span class="toggle-icon" onclick="toggleTask(${task.id})">${task.collapsed ? '▶️' : '▼'}</span>
         </div>
         ${timerHtml}
