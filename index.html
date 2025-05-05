@@ -328,6 +328,10 @@
           <p onclick="editComment(event, ${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
           <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
           <button class="convert-button" onclick="convertCommentToTask(${taskId}, ${comment.id})">Select as next action</button>
+          <button class="btn-done"   onclick="handleActionFromComment(${taskId}, ${comment.id}, 'done')"><i class="fas fa-check"></i> Done</button>
+          <button class="btn-cancel" onclick="handleActionFromComment(${taskId}, ${comment.id}, 'cancel')"><i class="fas fa-times"></i> Cancel</button>
+          <button class="btn-delay"  onclick="handleActionFromComment(${taskId}, ${comment.id}, 'delay')"><i class="fas fa-clock"></i> Delay</button>
+          <button class="btn-await"  onclick="handleActionFromComment(${taskId}, ${comment.id}, 'await')"><i class="fas fa-hourglass"></i> Await</button>
           <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Delete</button>
           </div>`;
         }
@@ -336,6 +340,14 @@
     function toggleTask(taskId){
       const task = tasks.find(function(t){ return t.id === taskId; });
       if(task){ task.collapsed = !task.collapsed; saveAndRenderTasks(); }
+    }
+    function handleActionFromComment(taskId, commentId, actionType) {
+      // on transforme d'abord le commentaire en sous-tâche
+      convertCommentToTask(taskId, commentId);
+      // la nouvelle tâche vient d'être créée : son ID = taskIdCounter-1
+      const newTaskId = taskIdCounter - 1;
+      // on applique ensuite l'action demandée sur cette sous-tâche
+      handleAction(newTaskId, actionType);
     }
     function changeTab(tab){
       currentTab = tab;
