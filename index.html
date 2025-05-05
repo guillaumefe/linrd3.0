@@ -327,7 +327,7 @@
           return `<div class="comment-item">
           <p onclick="editComment(event, ${taskId}, ${comment.id})">${renderTextWithLinks(comment.text)}</p>
           <span style="font-family:courrier-new;font-size:10px">${comment.date}</span>
-          <button class="convert-button" onclick="convertCommentToTask(${taskId}, ${comment.id})">Convert to Task</button>
+          <button class="convert-button" onclick="convertCommentToTask(${taskId}, ${comment.id})">Select as next action</button>
           <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Delete</button>
           </div>`;
         }
