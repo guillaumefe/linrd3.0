@@ -390,7 +390,10 @@
         task.status = 'inbox';
         task.modifiedDate = new Date();
       }
-      if (wasInbox && task.parentId !== null) {
+      if (wasInbox
+          && task.parentId !== null
+          && actionType !== 'await'
+          && actionType !== 'delay') {
         const parent = tasks.find(t => t.id === task.parentId);
         if (parent && parent.status === 'await') {
           parent.status = 'inbox';
