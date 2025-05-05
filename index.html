@@ -358,7 +358,7 @@
         const success = modifyDeadline(taskId, true);
         if(!success){ return; }
         const rationale = prompt(`Please add a rationale for "delay":`);
-        if(rationale && rationale.trim() !== ""){ addRationaleToTask(taskId, rationale.trim()); } else { alert("A rationale is required."); return; }
+        if(rationale && rationale.trim() !== ""){ addRationaleToTask(taskId, rationale.trim()); }
         task.status = 'delay';
         task.modifiedDate = new Date();
       }
