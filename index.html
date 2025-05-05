@@ -240,14 +240,12 @@
       
       if(localStorage.getItem('customSort-' + currentTab) === 'true') {
         const savedOrder = JSON.parse(localStorage.getItem('customOrder-' + currentTab) || '[]');
-        // Custom order
         filteredTasks.sort((a, b) => {
           const idxA = savedOrder.indexOf(a.id);
           const idxB = savedOrder.indexOf(b.id);
           return idxA - idxB;
         });
       } else {
-        // CurrentSortOrder
         filteredTasks.sort((a, b) => currentSortOrder === 'asc'
           ? new Date(a.createdDate) - new Date(b.createdDate)
           : new Date(b.createdDate) - new Date(a.createdDate)
@@ -377,6 +375,15 @@
         if(comment && comment.trim() !== ""){ addCommentToTask(taskId, comment.trim()); }
         task.status = actionType;
         task.modifiedDate = new Date();
+        if(actionType === 'done' && task.parentId !== null){
+          const parentTask = tasks.find(t => t.id === task.parentId);
+          if(parentTask && parentTask.status === 'await'){
+            parentTask.status = 'inbox';
+            parentTask.targetDate = null;
+            parentTask.order = task.order;
+            parentTask.modifiedDate = new Date();
+          }
+        }
       }
       else if(actionType === 'someday'){
         const agree = confirm(`This action is going to be sidelined, do you agree?`);
@@ -458,14 +465,18 @@
       saveAndRenderTasks();
     }
     function convertCommentToTask(taskId, commentId){
-      const parentTask = tasks.find(function(t){ return t.id === taskId; });
+      const parentTask = tasks.find(t => t.id === taskId);
       if(!parentTask) return;
-      const comment = parentTask.comments.find(function(c){ return c.id === commentId; });
+      const comment = parentTask.comments.find(c => c.id === commentId);
       if(!comment) return;
       pushUndoState();
-      const newTask = { id: taskIdCounter++, name: comment.text, description: "", comments: [], status: "inbox", createdDate: new Date(), modifiedDate: new Date(), collapsed: true, targetDate: null, parentId: parentTask.id, order: getMaxOrder('inbox') + 1 };
+      const originalOrder = parentTask.order;
+      parentTask.status = 'await';
+      parentTask.modifiedDate = new Date();
+      parentTask.order = getMaxOrder('await') + 1;
+      const newTask = { id: taskIdCounter++, name: comment.text, description: "", comments: [], status: "inbox", createdDate: new Date(), modifiedDate: new Date(), collapsed: true, targetDate: null, parentId: parentTask.id, order: originalOrder };
       tasks.push(newTask);
-      parentTask.comments = parentTask.comments.filter(function(c){ return c.id !== commentId; });
+      parentTask.comments = parentTask.comments.filter(c => c.id !== commentId);
       parentTask.modifiedDate = new Date();
       saveAndRenderTasks();
     }
@@ -506,15 +517,12 @@
         taskIdCounter = 0;
         localStorage.removeItem('tasks');
         localStorage.removeItem('taskForm');
-        localStorage.removeItem('sortOrder'); // Réinitialise également le sortOrder global
-    
-        // Parcours de toutes les clés de localStorage et suppression de celles liées aux custom sort et aux inputs de commentaires
+        localStorage.removeItem('sortOrder');
         Object.keys(localStorage).forEach(function(key){
           if(key.startsWith('customSort-') || key.startsWith('customOrder-') || key.startsWith('commentInput-')){
             localStorage.removeItem(key);
           }
         });
-
         saveAndRenderTasks();
         updateSortMenuDisplay();
         const sortMenu = document.getElementById('sort-order-menu');
@@ -696,12 +704,12 @@
       else { parts.push(seconds + 's'); }
       return parts.join(' ');
     }
-    
+
     function parseDateExpression(input, baseDate) {
       const referenceDate = baseDate || new Date();
-    
+
       try {
-        const results = chrono.parse(input, referenceDate); // ✅ chrono est global ici
+        const results = chrono.parse(input, referenceDate);
         if (results.length > 0) {
           const parsedDate = results[0].start.date();
           if (parsedDate > referenceDate) {
@@ -711,14 +719,13 @@
       } catch (e) {
         console.error("Error parsing date:", e);
       }
-    
+
       return null;
     }
-    
+
     function modifyDeadline(taskId, isMandatory){
       const task = tasks.find(t => t.id === taskId);
       if(!task) return false;
-      //const baseDate = task.modifiedDate ? new Date(task.modifiedDate) : new Date(task.createdDate);
       const baseDate = new Date();
       let newTargetDate = null;
       if(isMandatory){
@@ -787,18 +794,14 @@
 
     function performSearch() {
       const query = document.getElementById('search-input').value.trim().toLowerCase();
-      localStorage.setItem('searchInput', query); // Save the search input
+      localStorage.setItem('searchInput', query);
       if (!query) {
         updateTabCounts();
         renderTasks();
         return;
       }
-      
-      // Update tab counts for search
       updateAllTabsForSearch();
       const terms = query.split(/\s+/);
-      
-      // First, filter tasks based on the search query for the current tab
       let results = tasks.filter(task => {
         if (task.status !== currentTab) return false;
         const parentChainText = getParentChain(task).join(' ');
@@ -810,10 +813,7 @@
         ).toLowerCase();
         return terms.some(term => combinedText.includes(term));
       });
-      
-      // Now sort the filtered results according to the sort order
       if (localStorage.getItem('customSort-' + currentTab) === 'true') {
-        // When using a custom sort order, sort by the order stored in localStorage
         const savedOrder = JSON.parse(localStorage.getItem('customOrder-' + currentTab) || '[]');
         results.sort((a, b) => {
           const idxA = savedOrder.indexOf(a.id);
@@ -821,17 +821,14 @@
           return idxA - idxB;
         });
       } else {
-        // Otherwise, sort by createdDate in ascending or descending order
         results.sort((a, b) => currentSortOrder === 'asc'
           ? new Date(a.createdDate) - new Date(b.createdDate)
           : new Date(b.createdDate) - new Date(a.createdDate)
         );
       }
-      
-      // Render the filtered and sorted results
       renderSearchResults(results);
     }
-    
+
     function renderSearchResults(results){
       const taskList = document.getElementById('task-list');
       taskList.innerHTML = '';
@@ -926,9 +923,9 @@
         localStorage.setItem('sortOrder', currentSortOrder);
         const searchQuery = document.getElementById('search-input').value.trim();
         if (searchQuery !== "") {
-          performSearch(); // Applique le filtre ET le tri
+          performSearch();
         } else {
-          renderTasks();   // Affiche l'ensemble des tâches triées
+          renderTasks();
         }
       });
     });
@@ -936,8 +933,6 @@
       const sortMenu = document.getElementById('sort-order-menu');
       const customOption = sortMenu.querySelector('option[value="custom"]');
       
-      // Si aucun ordre custom n'a jamais été défini (la clé n'existe pas dans localStorage)
-      // on masque l'option "Custom Sort" en utilisant l'attribut hidden.
       if(localStorage.getItem('customSort-' + currentTab) === null){
         if (customOption) {
           customOption.hidden = true;
