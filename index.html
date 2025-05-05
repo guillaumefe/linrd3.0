@@ -88,6 +88,9 @@
     .comment-item .btn-cancel     { background-color: #d9534f; }  /* Cancel */
     .comment-item .btn-delay      { background-color: #ffc107; color: #000; } /* Delay */
     .comment-item .btn-await      { background-color: #17a2b8; }  /* Await */
+    .comment-item .btn-doc {
+      background-color: #6f42c1;
+    }
   </style>
 </head>
 <body>
@@ -357,6 +360,7 @@
           <button class="btn-cancel" onclick="handleActionFromComment(${taskId}, ${comment.id}, 'cancel')"><i class="fas fa-times"></i> Cancel</button>
           <button class="btn-delay"  onclick="handleActionFromComment(${taskId}, ${comment.id}, 'delay')"><i class="fas fa-clock"></i> Delay</button>
           <button class="btn-await"  onclick="handleActionFromComment(${taskId}, ${comment.id}, 'await')"><i class="fas fa-hourglass"></i> Await</button>
+          <button class="btn-doc" onclick="handleActionFromComment(${taskId}, ${comment.id}, 'doc')"><i class="fas fa-file-alt"></i> Doc</button>
           <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Delete</button>
           </div>`;
         }
