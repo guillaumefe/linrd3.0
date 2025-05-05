@@ -231,7 +231,6 @@
         }); 
       }
     }
-
     function renderTasks(){
       updateTabCounts();
       const taskList = document.getElementById('task-list');
@@ -352,8 +351,9 @@
       }
     }
     function handleAction(taskId, actionType){
-      const task = tasks.find(function(t){ return t.id === taskId; });
+      const task = tasks.find(t => t.id === taskId);
       if(!task){ console.error("Task with ID " + taskId + " not found."); return; }
+      const wasInbox = task.status === 'inbox';
       if(actionType === 'delay'){
         const success = modifyDeadline(taskId, true);
         if(!success){ return; }
@@ -375,15 +375,6 @@
         if(comment && comment.trim() !== ""){ addCommentToTask(taskId, comment.trim()); }
         task.status = actionType;
         task.modifiedDate = new Date();
-        if(actionType === 'done' && task.parentId !== null){
-          const parentTask = tasks.find(t => t.id === task.parentId);
-          if(parentTask && parentTask.status === 'await'){
-            parentTask.status = 'inbox';
-            parentTask.targetDate = null;
-            parentTask.order = task.order;
-            parentTask.modifiedDate = new Date();
-          }
-        }
       }
       else if(actionType === 'someday'){
         const agree = confirm(`This action is going to be sidelined, do you agree?`);
@@ -398,6 +389,14 @@
         }
         task.status = 'inbox';
         task.modifiedDate = new Date();
+      }
+      if (wasInbox && task.parentId !== null) {
+        const parent = tasks.find(t => t.id === task.parentId);
+        if (parent && parent.status === 'await') {
+          parent.status = 'inbox';
+          parent.modifiedDate = new Date();
+          parent.order = task.order;
+        }
       }
       pushUndoState();
       saveAndRenderTasks();
@@ -470,14 +469,25 @@
       const comment = parentTask.comments.find(c => c.id === commentId);
       if(!comment) return;
       pushUndoState();
-      const originalOrder = parentTask.order;
+      const parentOrder = parentTask.order;
       parentTask.status = 'await';
       parentTask.modifiedDate = new Date();
       parentTask.order = getMaxOrder('await') + 1;
-      const newTask = { id: taskIdCounter++, name: comment.text, description: "", comments: [], status: "inbox", createdDate: new Date(), modifiedDate: new Date(), collapsed: true, targetDate: null, parentId: parentTask.id, order: originalOrder };
+      const newTask = {
+        id: taskIdCounter++,
+        name: comment.text,
+        description: "",
+        comments: [],
+        status: "inbox",
+        createdDate: new Date(),
+        modifiedDate: new Date(),
+        collapsed: true,
+        targetDate: null,
+        parentId: parentTask.id,
+        order: parentOrder
+      };
       tasks.push(newTask);
       parentTask.comments = parentTask.comments.filter(c => c.id !== commentId);
-      parentTask.modifiedDate = new Date();
       saveAndRenderTasks();
     }
     function getParentChain(task){
@@ -603,7 +613,6 @@
       };
       worker.postMessage({ action: 'updateTasks', tasks: tasks });
     }
-
     function handleTasksReturnToInbox(taskIds) {
       let hasChanges = false;
       taskIds.forEach(taskId => {
@@ -617,12 +626,10 @@
           hasChanges = true;
         }
       });
-    
       if (hasChanges) {
         saveAndRenderTasks();
       }
     }
-
     function initializeSortable(){
       const taskList = document.getElementById('task-list');
       Sortable.create(taskList, { 
@@ -639,12 +646,9 @@
               task.order = count++;
             }
           });
-          
           localStorage.setItem('customOrder-' + currentTab, JSON.stringify(newOrderIds));
           localStorage.setItem('customSort-' + currentTab, 'true');
-          
           document.getElementById('sort-order-menu').value = 'custom';
-          
           pushUndoState();
           saveAndRenderTasks();
         }
@@ -704,12 +708,10 @@
       else { parts.push(seconds + 's'); }
       return parts.join(' ');
     }
-
     function parseDateExpression(input, baseDate) {
       const referenceDate = baseDate || new Date();
-
       try {
-        const results = chrono.parse(input, referenceDate);
+        const results = chrono.parse(input, referenceDate); // ✅ chrono est global ici
         if (results.length > 0) {
           const parsedDate = results[0].start.date();
           if (parsedDate > referenceDate) {
@@ -719,10 +721,8 @@
       } catch (e) {
         console.error("Error parsing date:", e);
       }
-
       return null;
     }
-
     function modifyDeadline(taskId, isMandatory){
       const task = tasks.find(t => t.id === taskId);
       if(!task) return false;
@@ -791,7 +791,6 @@
       const exportImport = document.getElementById('export-import');
       if(!hamburgerMenu.contains(e.target)){ exportImport.classList.remove('show'); }
     });
-
     function performSearch() {
       const query = document.getElementById('search-input').value.trim().toLowerCase();
       localStorage.setItem('searchInput', query);
@@ -828,7 +827,6 @@
       }
       renderSearchResults(results);
     }
-
     function renderSearchResults(results){
       const taskList = document.getElementById('task-list');
       taskList.innerHTML = '';
@@ -932,7 +930,6 @@
     function updateSortMenuDisplay(){
       const sortMenu = document.getElementById('sort-order-menu');
       const customOption = sortMenu.querySelector('option[value="custom"]');
-      
       if(localStorage.getItem('customSort-' + currentTab) === null){
         if (customOption) {
           customOption.hidden = true;
