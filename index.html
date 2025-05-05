@@ -91,6 +91,10 @@
     .comment-item .btn-doc {
       background-color: #6f42c1;
     }
+    .comment-item .btn-someday {
+      background-color: #FFD700;
+      color: #000;
+    }
   </style>
 </head>
 <body>
@@ -361,6 +365,7 @@
           <button class="btn-delay"  onclick="handleActionFromComment(${taskId}, ${comment.id}, 'delay')"><i class="fas fa-clock"></i> Delay</button>
           <button class="btn-await"  onclick="handleActionFromComment(${taskId}, ${comment.id}, 'await')"><i class="fas fa-hourglass"></i> Await</button>
           <button class="btn-doc" onclick="handleActionFromComment(${taskId}, ${comment.id}, 'doc')"><i class="fas fa-file-alt"></i> Doc</button>
+          <button class="btn-someday" onclick="handleActionFromComment(${taskId}, ${comment.id}, 'someday')"><i class="fas fa-lightbulb"></i> Someday</button> 
           <button class="delete-button" onclick="deleteComment(${taskId}, ${comment.id})">Delete</button>
           </div>`;
         }
