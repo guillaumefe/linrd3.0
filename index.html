@@ -418,6 +418,7 @@
         const success = modifyDeadline(taskId, true);
         if(!success){ return; }
         const rationale = prompt(`Please add a rationale for "delay":`);
+        if (rationale === null) return;
         if(rationale && rationale.trim() !== ""){ addRationaleToTask(taskId, rationale.trim()); }
         task.status = 'delay';
         task.modifiedDate = new Date();
@@ -425,6 +426,7 @@
       else if(actionType === 'await'){
         modifyDeadline(taskId, false);
         let rationale = prompt(`Add a rationale for "await" (optional). Leave blank or click Cancel to skip:`);
+        if (rationale === null) return;
         if(!rationale || rationale.trim() === ""){ rationale = "Task awaited by user."; }
         if(rationale && rationale.trim() !== ""){ addRationaleToTask(taskId, rationale.trim()); }
         task.status = 'await';
@@ -432,12 +434,14 @@
       }
       else if(actionType === 'done' || actionType === 'cancel' || actionType === 'doc'){
         const comment = prompt(`Please add a comment for "${actionType}" (leave empty to skip):`);
+        if (comment === null) return;
         if(comment && comment.trim() !== ""){ addCommentToTask(taskId, comment.trim()); }
         task.status = actionType;
         task.modifiedDate = new Date();
       }
       else if(actionType === 'someday'){
         const agree = confirm(`This action is going to be sidelined, do you agree?`);
+        if (agree === null) return;
         if(!agree){ return; }
         task.status = 'someday';
         task.modifiedDate = new Date();
