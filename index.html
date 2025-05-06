@@ -417,7 +417,7 @@
       if(actionType === 'delay'){
         const success = modifyDeadline(taskId, true);
         if(!success){ return; }
-        const rationale = prompt(`Please add a rationale for "delay":`);
+        const rationale = prompt(`Add a rationale for "delay" (optional):`);
         if (rationale === null) return;
         if(rationale && rationale.trim() !== ""){ addRationaleToTask(taskId, rationale.trim()); }
         task.status = 'delay';
@@ -425,7 +425,7 @@
       }
       else if(actionType === 'await'){
         modifyDeadline(taskId, false);
-        let rationale = prompt(`Add a rationale for "await" (optional). Leave blank or click Cancel to skip:`);
+        let rationale = prompt(`Add a rationale for "await" (optional):`);
         if (rationale === null) return;
         if(!rationale || rationale.trim() === ""){ rationale = "Task awaited by user."; }
         if(rationale && rationale.trim() !== ""){ addRationaleToTask(taskId, rationale.trim()); }
@@ -433,7 +433,7 @@
         task.modifiedDate = new Date();
       }
       else if(actionType === 'done' || actionType === 'cancel' || actionType === 'doc'){
-        const comment = prompt(`Please add a comment for "${actionType}" (leave empty to skip):`);
+        const comment = prompt(`Please add a comment for "${actionType}" (optional):`);
         if (comment === null) return;
         if(comment && comment.trim() !== ""){ addCommentToTask(taskId, comment.trim()); }
         task.status = actionType;
